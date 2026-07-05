@@ -12,66 +12,50 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      background: radial-gradient(circle at top right, #1a1a2e 0%, var(--bg-body) 100%);
+      background: var(--bg);
       font-family: var(--font-sans);
       color: var(--text);
-      overflow: hidden;
     }
     
-    /* Ornamen background */
-    .bg-shape {
-      position: absolute;
-      width: 300px;
-      height: 300px;
-      background: var(--accent);
-      filter: blur(100px);
-      opacity: 0.15;
-      border-radius: 50%;
-      z-index: 0;
-      animation: float 6s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.05); }
-    }
-
     .login-card {
-      position: relative;
-      background: rgba(30, 30, 30, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 50px 40px;
+      padding: 40px;
       text-align: center;
       width: 100%;
-      max-width: 360px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      z-index: 1;
-      animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 380px;
+      box-shadow: none; /* No shadow for flat retro look */
     }
     
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
+    .login-card-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--accent-dim);
+      margin-bottom: 20px;
+      display: inline-block;
+      border-bottom: 1px dashed rgba(200, 242, 94, 0.3);
+      padding-bottom: 5px;
+      font-weight: 700;
     }
 
     .login-card h1 {
       margin-top: 0;
-      font-size: 1.8rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(90deg, #ffffff, var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      letter-spacing: 1px;
       margin-bottom: 15px;
     }
     
     .login-card p {
-      color: var(--text-muted);
+      color: var(--text-dim);
       margin-bottom: 35px;
-      line-height: 1.6;
-      font-size: 0.95rem;
+      line-height: 1.5;
+      font-size: 12px;
+      font-family: var(--font-mono);
     }
     
     .btn-google {
@@ -79,40 +63,36 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      background: #ffffff;
-      color: #1a1a1a;
-      border: none;
-      padding: 14px 24px;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
+      background: var(--accent);
+      color: #0d0d0d;
+      border: 1px solid var(--accent);
+      padding: 12px 24px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 1px;
+      border-radius: var(--radius);
       cursor: pointer;
       width: 100%;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: var(--transition);
+      outline: none;
     }
     
     .btn-google:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255,255,255,0.15);
-    }
-    
-    .btn-google:active {
-      transform: translateY(0);
+      background: #d9ff70;
+      border-color: #d9ff70;
     }
     
     .btn-google img {
-      width: 22px;
-      height: 22px;
+      width: 18px;
+      height: 18px;
     }
   </style>
 </head>
 <body>
   
-  <div class="bg-shape" style="top: -50px; left: -50px;"></div>
-  <div class="bg-shape" style="bottom: -100px; right: -50px; background: #8800ff;"></div>
-
   <div class="login-card">
+    <div class="login-card-label">▌ AUTHENTICATION</div>
     <h1>TikTok Song Request</h1>
     <p>Silakan masuk menggunakan akun Google Anda untuk mengakses Dasbor dan mengatur antrian lagu.</p>
     
