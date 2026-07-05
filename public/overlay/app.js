@@ -29,7 +29,17 @@ function onYouTubeIframeAPIReady() {
     },
     events: {
       onReady: () => { ytReady = true; },
-      onError: (e) => { console.error('YT Player Error:', e.data); }
+      onStateChange: (e) => {
+        // Jika lagu habis (ENDED = 0), panggil API next otomatis
+        if (e.data === YT.PlayerState.ENDED) {
+          fetch('/api/next', { method: 'POST' }).catch(console.error);
+        }
+      },
+      onError: (e) => { 
+        console.error('YT Player Error:', e.data); 
+        // Jika error, lewati otomatis agar tidak nyangkut
+        fetch('/api/next', { method: 'POST' }).catch(console.error);
+      }
     }
   });
 }
@@ -57,10 +67,25 @@ function renderOverlay(state) {
   const { currentSong, queue } = state;
 
   if (!currentSong) {
-    overlay.classList.add('hidden');
     if (ytReady && ytPlayer.stopVideo) ytPlayer.stopVideo();
+    
+    // Tampilkan UI Kosong / Menunggu Request
+    overlay.classList.remove('hidden');
+    ovTitle.textContent = 'Menunggu Lagu...';
+    ovTitle.style.animation = 'none';
+    ovTitle.classList.remove('long');
+    
+    ovArtist.textContent = 'Ketik !req [judul] di live chat';
+    ovDuration.textContent = '??:??';
+    
+    ovRequester.style.display = 'none';
+    nextRow.style.display = 'none';
     return;
   }
+
+  // Tampilkan UI Normal
+  overlay.classList.remove('hidden');
+  ovRequester.style.display = 'block';
 
   // Auto-play lagu jika videoId tersedia
   if (ytReady && ytPlayer.loadVideoById && currentSong.videoId) {
