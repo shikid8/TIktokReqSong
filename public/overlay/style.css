@@ -1,0 +1,189 @@
+/* ═══════════════════════════════════════════════
+   OBS OVERLAY — TEXT-ONLY RETRO MINIMALIST
+   Tambahkan sebagai Browser Source di OBS
+   Recommended size: 420 x 110
+   ═══════════════════════════════════════════════ */
+
+:root {
+  --bg:       rgba(8, 8, 8, 0.90);
+  --border:   #c8f25e;
+  --accent:   #c8f25e;
+  --accent-2: #8aab3e;
+  --text:     #e8ecd4;
+  --text-dim: #5a7a28;
+  --next-col: #7ac4f2;
+  --font:     'Space Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: transparent;
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+/* ── OVERLAY CONTAINER ────────────────────────── */
+.overlay {
+  position: relative;
+  width: 420px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px 11px 14px;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+/* ── HEADER ROW ───────────────────────────────── */
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.dot.blink {
+  animation: blink 1.2s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.label-now {
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.divider {
+  font-size: 8px;
+  color: rgba(200, 242, 94, 0.2);
+  letter-spacing: -1px;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* ── SONG TITLE ───────────────────────────────── */
+.song-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Judul panjang → efek marquee */
+.song-title.long {
+  animation: marquee 12s linear infinite;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(0); }
+  70%  { transform: translateX(var(--scroll-dist, -60%)); }
+  100% { transform: translateX(var(--scroll-dist, -60%)); }
+}
+
+/* ── REQUESTER ────────────────────────────────── */
+.song-requester {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* ── NEXT ROW ─────────────────────────────────── */
+.next-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(200, 242, 94, 0.12);
+}
+
+.next-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--next-col);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.next-title {
+  font-size: 10px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  opacity: 0.5;
+}
+
+/* ── CORNER MARKS ─────────────────────────────── */
+.corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  opacity: 0.4;
+}
+
+.corner.tl {
+  top: 4px; right: 4px;
+  border-top: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+
+.corner.br {
+  bottom: 4px; right: 4px;
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+
+/* ── CRT SCANLINES ────────────────────────────── */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: tiktok-song-request
+    runtime: node
+    buildCommand: npm ci --omit=dev
+    startCommand: node index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # TIKTOK_USERNAME — opsional
+      # Jika diisi, username akan auto-fill di dashboard
+      # Jika kosong, user input username langsung di dashboard
+      - key: TIKTOK_USERNAME
+        value: ""
+      # YOUTUBE_API_KEY — opsional, untuk thumbnail & pencarian akurat
+      - key: YOUTUBE_API_KEY
+        value: ""
+      - key: REQUEST_PREFIX
+        value: "!req"
+      - key: MAX_QUEUE_SIZE
+        value: "50"
+      - key: ENABLE_SIMULATOR
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        value: "*"

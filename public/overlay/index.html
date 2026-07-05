@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Song Request — OBS Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="overlay" class="overlay hidden">
+
+    <!-- CRT SCANLINES -->
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <!-- HEADER ROW -->
+    <div class="header-row">
+      <span class="dot blink"></span>
+      <span class="label-now">NOW PLAYING</span>
+      <span class="divider">────────────────────</span>
+    </div>
+
+    <!-- SONG TITLE -->
+    <div id="ov-title" class="song-title">—</div>
+
+    <!-- REQUESTER -->
+    <div id="ov-requester" class="song-requester">req by —</div>
+
+    <!-- NEXT UP -->
+    <div class="next-row" id="next-row">
+      <span class="next-label">NEXT ▸</span>
+      <span id="ov-next" class="next-title">—</span>
+    </div>
+
+    <!-- CORNER MARKS -->
+    <div class="corner tl"></div>
+    <div class="corner br"></div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

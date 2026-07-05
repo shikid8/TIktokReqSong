@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Song Request — Dashboard</title>
+  <meta name="description" content="Dashboard admin untuk mengelola antrian request lagu dari TikTok Live." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">▶ SongReq</span>
+      <span class="badge" id="status-badge">● OFFLINE</span>
+      <span class="badge yt-badge" id="yt-badge" title="Status YouTube API Key">YT: —</span>
+    </div>
+    <div class="header-right">
+      <div class="connect-wrap">
+        <div class="connect-form">
+          <input type="text" id="username-input" placeholder="masukkan @tiktok_username" autocomplete="off" />
+          <button id="connect-btn" class="btn btn-primary">CONNECT</button>
+        </div>
+        <div class="connect-hint" id="connect-hint">Masukkan username TikTok yang sedang live, lalu klik CONNECT</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SIMULATOR PANEL (testing tanpa live) -->
+  <div class="sim-bar" id="sim-bar">
+    <span class="sim-label">⚗ SIMULATOR</span>
+    <div class="sim-form">
+      <input type="text" id="sim-user" placeholder="username" value="test_user" />
+      <input type="text" id="sim-comment" placeholder="!req Shape of You" autocomplete="off" />
+      <button id="sim-send-btn" class="btn btn-sim">KIRIM</button>
+      <button id="sim-demo-btn" class="btn btn-sim-demo">▶ AUTO DEMO</button>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <main class="main">
+
+    <!-- KOLOM KIRI: SEDANG DIMAINKAN + ANTRIAN -->
+    <section class="left-col">
+
+      <!-- NOW PLAYING -->
+      <div class="card" id="now-playing-card">
+        <div class="card-label">▌ NOW PLAYING</div>
+        <div id="now-playing-content" class="now-playing-empty">
+          <span class="empty-text">— Tidak ada lagu —</span>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="controls">
+        <button id="next-btn" class="btn btn-next">⏭ NEXT</button>
+        <button id="clear-btn" class="btn btn-danger">✕ CLEAR ALL</button>
+      </div>
+
+      <!-- QUEUE -->
+      <div class="card">
+        <div class="card-label">▌ ANTRIAN <span id="queue-count" class="count-badge">0</span></div>
+        <div id="queue-list" class="queue-list">
+          <div class="empty-text">Antrian kosong...</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- KOLOM KANAN: LOG KOMENTAR + HISTORY -->
+    <section class="right-col">
+
+      <!-- PANDUAN PENGGUNAAN -->
+      <div class="card card-guide">
+        <div class="card-label">▌ CARA SETUP OBS & PENGGUNAAN</div>
+        <div class="guide-content">
+          <ol>
+            <li>Masukkan username akun TikTok yang sedang live dan klik <b>CONNECT</b>.</li>
+            <li>Buka OBS, tambahkan <b>Browser Source</b> baru.</li>
+            <li>Masukkan URL ini: <br><code id="overlay-url-display" class="copyable-code">Loading...</code></li>
+            <li>Atur ukuran: Width <b>420</b>, Height <b>110</b>.</li>
+            <li>Penonton di TikTok kini dapat merequest lagu dengan mengetik <code id="guide-prefix-display" class="inline-code">!req</code> diikuti judul lagu.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- COMMENT LOG -->
+      <div class="card card-log">
+        <div class="card-label">▌ LIVE COMMENTS</div>
+        <div id="comment-log" class="comment-log"></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="card">
+        <div class="card-label">▌ HISTORY</div>
+        <div id="history-list" class="history-list">
+          <div class="empty-text">Belum ada lagu yang dimainkan.</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
