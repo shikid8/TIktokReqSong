@@ -21,6 +21,6 @@ services:
       - key: MAX_QUEUE_SIZE
         value: "50"
       - key: ENABLE_SIMULATOR
-        value: "false"
+        value: "true"
       - key: ALLOWED_ORIGINS
         value: "*"
