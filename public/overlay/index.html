@@ -10,6 +10,10 @@
 </head>
 <body>
 
+  <div id="ytplayer-container" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
+    <div id="ytplayer"></div>
+  </div>
+
   <div id="overlay" class="overlay hidden">
 
     <!-- CRT SCANLINES -->
@@ -22,8 +26,13 @@
       <span class="divider">────────────────────</span>
     </div>
 
-    <!-- SONG TITLE -->
+    <!-- SONG TITLE & META -->
     <div id="ov-title" class="song-title">—</div>
+    <div class="song-meta">
+      <span id="ov-artist" class="song-artist">—</span>
+      <span class="meta-dot">·</span>
+      <span id="ov-duration" class="song-duration">00:00</span>
+    </div>
 
     <!-- REQUESTER -->
     <div id="ov-requester" class="song-requester">req by —</div>
@@ -40,6 +49,7 @@
 
   </div>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>

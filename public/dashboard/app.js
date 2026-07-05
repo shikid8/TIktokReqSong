@@ -10,13 +10,33 @@ const usernameInput  = document.getElementById('username-input');
 const connectBtn     = document.getElementById('connect-btn');
 const nextBtn        = document.getElementById('next-btn');
 const clearBtn       = document.getElementById('clear-btn');
+const audioToggleBtn = document.getElementById('audio-toggle-btn');
 const nowPlayingCard = document.getElementById('now-playing-content');
 const queueList      = document.getElementById('queue-list');
 const queueCount     = document.getElementById('queue-count');
 const commentLog     = document.getElementById('comment-log');
 const historyList    = document.getElementById('history-list');
 
-// Toast container
+// ─── YOUTUBE PLAYER ──────────────────────────────
+let ytPlayer = null;
+let ytReady = false;
+let isAudioEnabled = true;
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('ytplayer', {
+    height: '1',
+    width: '1',
+    playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
+    events: {
+      onReady: () => { 
+        ytReady = true; 
+        if (!isAudioEnabled) ytPlayer.mute(); 
+      }
+    }
+  });
+}
+
+// ─── TOAST ───────────────────────────────────────
 const toastContainer = document.createElement('div');
 toastContainer.id = 'toast-container';
 document.body.appendChild(toastContainer);
@@ -37,7 +57,16 @@ function showToast(message, type = 'info') {
 function renderNowPlaying(song) {
   if (!song) {
     nowPlayingCard.innerHTML = `<div class="now-playing-empty"><span class="empty-text">— Tidak ada lagu —</span></div>`;
+    if (ytReady && ytPlayer.stopVideo) ytPlayer.stopVideo();
     return;
+  }
+
+  // Play audio
+  if (ytReady && ytPlayer.loadVideoById && song.videoId) {
+    const currentVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
+    if (currentVid !== song.videoId) {
+      ytPlayer.loadVideoById(song.videoId);
+    }
   }
 
   const thumbHtml = song.thumbnail
@@ -50,7 +79,10 @@ function renderNowPlaying(song) {
         ${thumbHtml}
         <div class="now-playing-info">
           <div class="now-playing-title">${escHtml(song.title)}</div>
-          <div class="now-playing-channel">${escHtml(song.channelTitle || '')}</div>
+          <div class="now-playing-channel" style="display:flex; justify-content:space-between; width:100%;">
+            <span>${escHtml(song.channelTitle || 'Unknown')}</span>
+            <span style="color:var(--accent); font-family:var(--font-mono); font-size:10px;">⏱ ${escHtml(song.duration || '??:??')}</span>
+          </div>
           <div class="now-playing-requester">req: @${escHtml(song.requestedBy)}</div>
           <a class="yt-link" href="${song.youtubeUrl}" target="_blank" rel="noopener">▶ BUKA DI YOUTUBE</a>
         </div>
@@ -78,7 +110,10 @@ function renderQueue(queue) {
         ${thumbHtml}
         <div class="queue-info">
           <div class="queue-title">${escHtml(song.title)}</div>
-          <div class="queue-requester">@${escHtml(song.requestedBy)}</div>
+          <div class="queue-requester">
+            @${escHtml(song.requestedBy)} 
+            <span style="float:right; opacity:0.7;">⏱ ${escHtml(song.duration || '??:??')}</span>
+          </div>
         </div>
         <button class="btn-icon" onclick="deleteSong(${song.id})" title="Hapus">✕</button>
       </div>
@@ -158,6 +193,23 @@ clearBtn.addEventListener('click', async () => {
   if (confirm('Hapus semua antrian?')) {
     await apiFetch('/api/queue', { method: 'DELETE' });
     showToast('Antrian dibersihkan.');
+  }
+});
+
+audioToggleBtn.addEventListener('click', () => {
+  isAudioEnabled = !isAudioEnabled;
+  if (isAudioEnabled) {
+    if (ytReady) ytPlayer.unMute();
+    audioToggleBtn.textContent = '🔊 AUDIO ON';
+    audioToggleBtn.classList.remove('btn-danger');
+    audioToggleBtn.classList.add('btn-sim');
+    showToast('Audio Dashboard dinyalakan.');
+  } else {
+    if (ytReady) ytPlayer.mute();
+    audioToggleBtn.textContent = '🔇 AUDIO OFF';
+    audioToggleBtn.classList.remove('btn-sim');
+    audioToggleBtn.classList.add('btn-danger');
+    showToast('Audio Dashboard dimatikan.');
   }
 });
 

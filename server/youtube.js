@@ -9,9 +9,32 @@ function buildFallback(query) {
   return {
     title: query,
     youtubeUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+    videoId: null,
     thumbnail: null,
     channelTitle: '—',
+    duration: '??:??'
   };
+}
+
+/**
+ * Mengubah durasi ISO 8601 (PT3M20S) menjadi format MM:SS
+ */
+function parseDuration(isoStr) {
+  const match = isoStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return '00:00';
+  
+  const h = parseInt(match[1]) || 0;
+  const m = parseInt(match[2]) || 0;
+  const s = parseInt(match[3]) || 0;
+  
+  let formatted = '';
+  if (h > 0) formatted += h + ':';
+  
+  const mStr = (h > 0 && m < 10) ? `0${m}` : m;
+  const sStr = s < 10 ? `0${s}` : s;
+  
+  formatted += `${mStr}:${sStr}`;
+  return formatted;
 }
 
 /**
@@ -46,12 +69,32 @@ async function searchSong(query) {
     const video = items[0];
     const videoId = video.id.videoId;
     const snippet = video.snippet;
+    
+    let duration = '??:??';
+    
+    // Ambil detail durasi (request kedua)
+    try {
+      const vidRes = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+        params: {
+          part: 'contentDetails',
+          id: videoId,
+          key: config.YOUTUBE_API_KEY,
+        }
+      });
+      if (vidRes.data.items && vidRes.data.items.length > 0) {
+        duration = parseDuration(vidRes.data.items[0].contentDetails.duration);
+      }
+    } catch (e) {
+      console.error('[YouTube] Gagal fetch duration:', e.message);
+    }
 
     return {
       title: snippet.title,
       youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
+      videoId: videoId,
       thumbnail: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || null,
       channelTitle: snippet.channelTitle,
+      duration: duration
     };
   } catch (err) {
     console.error('[YouTube] Error saat mencari lagu:', err.message);

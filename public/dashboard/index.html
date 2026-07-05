@@ -11,6 +11,11 @@
 </head>
 <body>
 
+  <!-- YOUTUBE PLAYER CONTAINER (INVISIBLE) -->
+  <div id="ytplayer-container" style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
+    <div id="ytplayer"></div>
+  </div>
+
   <!-- HEADER -->
   <header class="header">
     <div class="header-left">
@@ -65,7 +70,8 @@
       <!-- CONTROLS -->
       <div class="controls">
         <button id="next-btn" class="btn btn-next">⏭ NEXT</button>
-        <button id="clear-btn" class="btn btn-danger">✕ CLEAR ALL</button>
+        <button id="audio-toggle-btn" class="btn btn-sim" style="flex:1" title="Matikan/Nyalakan Audio di Dashboard">🔊 AUDIO ON</button>
+        <button id="clear-btn" class="btn btn-danger">✕ CLEAR</button>
       </div>
 
       <!-- QUEUE -->
@@ -113,6 +119,7 @@
 
   </main>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>

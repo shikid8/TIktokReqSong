@@ -115,6 +115,35 @@ body {
   100% { transform: translateX(var(--scroll-dist, -60%)); }
 }
 
+/* ── SONG META (ARTIST & DURATION) ────────────── */
+.song-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text);
+  margin-top: 4px;
+  opacity: 0.8;
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.song-artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
+
+.meta-dot {
+  color: var(--accent);
+}
+
+.song-duration {
+  font-family: var(--font);
+  font-weight: 700;
+  color: var(--next-col);
+}
+
 /* ── REQUESTER ────────────────────────────────── */
 .song-requester {
   font-size: 10px;
