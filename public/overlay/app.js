@@ -15,14 +15,16 @@ let ytReady = false;
 // Callback dari YouTube API
 function onYouTubeIframeAPIReady() {
   ytPlayer = new YT.Player('ytplayer', {
-    height: '1',
-    width: '1',
+    height: '200',
+    width: '200',
+    host: 'https://www.youtube.com',
     playerVars: {
       autoplay: 1,
       controls: 0,
       disablekb: 1,
       fs: 0,
       rel: 0,
+      enablejsapi: 1,
       origin: window.location.origin
     },
     events: {
