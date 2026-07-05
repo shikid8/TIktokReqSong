@@ -26,7 +26,12 @@ function onYouTubeIframeAPIReady() {
   ytPlayer = new YT.Player('ytplayer', {
     height: '1',
     width: '1',
-    playerVars: { autoplay: 1, controls: 0, disablekb: 1 },
+    playerVars: { 
+      autoplay: 1, 
+      controls: 0, 
+      disablekb: 1,
+      origin: window.location.origin
+    },
     events: {
       onReady: () => { 
         ytReady = true; 
