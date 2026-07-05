@@ -11,6 +11,14 @@ const queue     = require('./server/queue');
 const tiktok    = require('./server/tiktok');
 const simulator = require('./server/simulator');
 
+// Tangkap semua error tidak terduga agar server tidak crash
+process.on('uncaughtException', (err) => {
+  console.error('[Global Error] Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Global Error] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const app    = express();
 const server = http.createServer(app);
 
