@@ -285,6 +285,35 @@ body {
   padding: 24px;
 }
 
+/* ─── PREVIEW OVERLAY ────────────────────────────── */
+.card-preview {
+  margin-bottom: 12px;
+}
+
+.preview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(200, 242, 94, 0.03),
+    rgba(200, 242, 94, 0.03) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  border: 1px dashed rgba(200, 242, 94, 0.2);
+  border-radius: 4px;
+  padding: 15px 0;
+  overflow: hidden;
+}
+
+#overlay-iframe {
+  width: 420px;
+  height: 110px;
+  background: transparent;
+  pointer-events: none; /* Cegah interaksi di dalam iframe */
+}
+
 /* ── NOW PLAYING ──────────────────────────────── */
 .now-playing-content {
   padding: 16px;
