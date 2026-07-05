@@ -1,5 +1,8 @@
-// OBS Overlay — app.js (text-only)
-const socket = io();
+// OBS Overlay — app.js (Multi-Tenant)
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token') || '';
+
+const socket = io({ query: { token } });
 
 const overlay      = document.getElementById('overlay');
 const ovTitle      = document.getElementById('ov-title');
@@ -32,13 +35,13 @@ function onYouTubeIframeAPIReady() {
       onStateChange: (e) => {
         // Jika lagu habis (ENDED = 0), panggil API next otomatis
         if (e.data === YT.PlayerState.ENDED) {
-          fetch('/api/next', { method: 'POST' }).catch(console.error);
+          fetch(`/api/next?token=${token}`, { method: 'POST' }).catch(console.error);
         }
       },
       onError: (e) => { 
         console.error('YT Player Error:', e.data); 
         // Jika error, lewati otomatis agar tidak nyangkut
-        fetch('/api/next', { method: 'POST' }).catch(console.error);
+        fetch(`/api/next?token=${token}`, { method: 'POST' }).catch(console.error);
       }
     }
   });

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - TikTok Song Request</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../dashboard/style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg-body);
+      font-family: var(--font-sans);
+    }
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .login-card h1 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      color: var(--text);
+    }
+    .login-card p {
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    .btn-google {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+    .btn-google:hover {
+      opacity: 0.9;
+    }
+    .btn-google img {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <h1>TikTok Song Request</h1>
+    <p>Silakan masuk menggunakan akun Google Anda untuk mengakses Dasbor dan mengatur antrian lagu.</p>
+    
+    <button id="login-btn" class="btn-google">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
+      Sign in with Google
+    </button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const loginBtn = document.getElementById('login-btn');
+
+    async function initAuth() {
+      // 1. Ambil config dari server untuk mendapatkan Supabase Keys
+      const res = await fetch('/api/config');
+      const config = await res.json();
+
+      if (!config.supabaseUrl || !config.supabaseKey) {
+        alert('Supabase URL dan Key belum diatur di server (.env). Hubungi admin.');
+        return;
+      }
+
+      // 2. Inisialisasi Supabase
+      const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+
+      // Cek apakah user sudah login (jika iya, redirect langsung)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      // 3. Pasang event listener tombol login
+      loginBtn.addEventListener('click', async () => {
+        loginBtn.textContent = 'Memuat...';
+        loginBtn.disabled = true;
+
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin + '/dashboard'
+          }
+        });
+
+        if (error) {
+          alert('Gagal login: ' + error.message);
+          loginBtn.textContent = 'Sign in with Google';
+          loginBtn.disabled = false;
+        }
+      });
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>

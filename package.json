@@ -11,10 +11,17 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "keywords": ["tiktok", "live", "song-request", "obs", "overlay"],
+  "keywords": [
+    "tiktok",
+    "live",
+    "song-request",
+    "obs",
+    "overlay"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.0",
     "axios": "^1.18.1",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",

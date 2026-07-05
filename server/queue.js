@@ -1,78 +1,82 @@
 // Queue Manager — mengelola antrian request lagu
 
-let queue = [];
-let history = [];
-let currentSong = null;
+// Queue Manager (Multi-Tenant) — mengelola antrian berdasarkan userId
+
+const queues = new Map();
 
 /**
- * Tambah lagu ke antrian.
- * Jika tidak ada lagu yang sedang dimainkan, langsung jadikan currentSong
- * agar overlay otomatis tampil tanpa harus tekan NEXT.
- * @param {Object} song
- * @returns {{ isFirstSong: boolean, queue: Array }}
+ * Dapatkan state ruangan untuk userId tertentu. Jika belum ada, buat baru.
  */
-function addToQueue(song) {
+function getRoomState(userId) {
+  if (!queues.has(userId)) {
+    queues.set(userId, {
+      queue: [],
+      history: [],
+      currentSong: null,
+    });
+  }
+  return queues.get(userId);
+}
+
+function addToQueue(userId, song) {
+  const room = getRoomState(userId);
   const newSong = { ...song, id: Date.now() + Math.random() };
 
-  if (!currentSong) {
-    // Tidak ada yang dimainkan → langsung jadikan current
-    currentSong = newSong;
-    return { isFirstSong: true, queue };
+  if (!room.currentSong) {
+    room.currentSong = newSong;
+    return { isFirstSong: true, queue: room.queue };
   }
 
-  queue.push(newSong);
-  return { isFirstSong: false, queue };
+  room.queue.push(newSong);
+  return { isFirstSong: false, queue: room.queue };
 }
 
-/**
- * Ambil lagu berikutnya dari antrian (dan set sebagai current)
- */
-function nextSong() {
-  if (currentSong) {
-    history.unshift(currentSong);
-    if (history.length > 50) history.pop();
+function nextSong(userId) {
+  const room = getRoomState(userId);
+  if (room.currentSong) {
+    room.history.unshift(room.currentSong);
+    if (room.history.length > 50) room.history.pop();
   }
-  currentSong = queue.shift() || null;
-  return currentSong;
+  room.currentSong = room.queue.shift() || null;
+  return room.currentSong;
 }
 
-/**
- * Hapus lagu dari antrian berdasarkan id
- */
-function removeSong(id) {
-  queue = queue.filter((s) => s.id !== id);
-  return queue;
+function removeSong(userId, id) {
+  const room = getRoomState(userId);
+  room.queue = room.queue.filter((s) => s.id !== id);
+  return room.queue;
 }
 
-/**
- * Hentikan lagu yang sedang berjalan secara paksa (tanpa auto next)
- */
-function stopCurrent() {
-  if (currentSong) {
-    history.unshift(currentSong);
-    if (history.length > 50) history.pop();
+function stopCurrent(userId) {
+  const room = getRoomState(userId);
+  if (room.currentSong) {
+    room.history.unshift(room.currentSong);
+    if (room.history.length > 50) room.history.pop();
   }
-  currentSong = null;
-  return currentSong;
+  room.currentSong = null;
+  return room.currentSong;
 }
 
-/**
- * Kosongkan seluruh antrian
- */
-function clearQueue() {
-  queue = [];
-  return queue;
+function clearQueue(userId) {
+  const room = getRoomState(userId);
+  room.queue = [];
+  return room.queue;
 }
 
-/**
- * Get state lengkap
- */
-function getState() {
+function getState(userId) {
+  const room = getRoomState(userId);
   return {
-    currentSong,
-    queue: [...queue],
-    history: [...history],
+    currentSong: room.currentSong,
+    queue: [...room.queue],
+    history: [...room.history],
   };
 }
 
-module.exports = { addToQueue, nextSong, removeSong, clearQueue, stopCurrent, getState };
+module.exports = { 
+  addToQueue, 
+  nextSong, 
+  removeSong, 
+  clearQueue, 
+  stopCurrent, 
+  getState 
+};

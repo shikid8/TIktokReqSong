@@ -1,6 +1,9 @@
-// Dashboard — app.js
-const socket = io();
+// Dashboard — app.js (Multi-Tenant)
+let socket = null;
 let isConnected = false;
+let supabase = null;
+let accessToken = null;
+let currentUser = null;
 
 // ─── ELEMENTS ────────────────────────────────────
 const statusBadge    = document.getElementById('status-badge');
@@ -166,10 +169,21 @@ function escHtml(str) {
 
 // ─── API CALLS ────────────────────────────────────
 async function apiFetch(url, options = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...options,
   });
+  
+  if (res.status === 401) {
+    window.location.href = '/login';
+    return;
+  }
+  
   return res.json();
 }
 
@@ -239,40 +253,100 @@ audioToggleBtn.addEventListener('click', () => {
   }
 });
 
-// ─── SOCKET EVENTS ────────────────────────────────
-socket.on('queue_update', (state) => {
-  renderNowPlaying(state.currentSong);
-  renderQueue(state.queue);
-  renderHistory(state.history);
-});
+// ─── INIT & AUTHENTICATION ───────────────────────
+(async () => {
+  // Load konfigurasi dari server
+  const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
 
-socket.on('connected', (data) => {
-  isConnected = true;
-  statusBadge.textContent = `● LIVE @${data.username}`;
-  statusBadge.classList.add('connected');
-  connectBtn.textContent = 'DISCONNECT';
-  showToast(`✓ Terhubung ke @${data.username}`);
-});
+  if (cfg.supabaseUrl && cfg.supabaseKey) {
+    supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    accessToken = session.access_token;
+    currentUser = session.user;
 
-socket.on('disconnected', () => {
-  isConnected = false;
-  statusBadge.textContent = '● OFFLINE';
-  statusBadge.classList.remove('connected');
-  connectBtn.textContent = 'CONNECT';
-});
+    // Tampilkan profil
+    document.getElementById('user-profile').style.display = 'flex';
+    document.getElementById('user-avatar').src = currentUser.user_metadata.avatar_url || '';
+    document.getElementById('user-name').textContent = currentUser.user_metadata.full_name || currentUser.email;
 
-socket.on('error', (data) => {
-  showToast(`Error: ${data.message}`, 'error');
-});
+    // Tampilkan link OBS
+    const obsUrl = `${window.location.origin}/overlay?token=${currentUser.id}`;
+    document.getElementById('obs-url-input').value = obsUrl;
 
-socket.on('comment', (data) => {
-  addComment(data.user, data.comment, false);
-});
+    document.getElementById('copy-obs-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(obsUrl);
+      showToast('URL OBS disalin ke clipboard!');
+    });
 
-socket.on('song_request', (data) => {
-  addComment(data.requestedBy, `!req ${data.originalQuery}`, true);
-  showToast(`🎵 @${data.requestedBy} request: ${data.title}`);
-});
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+    });
+  }
+
+  // Koneksi Socket.io menggunakan Token JWT
+  socket = io({ auth: { token: accessToken } });
+  setupSocketEvents();
+
+  // Auto-fill username jika ada default dari env
+  if (cfg.defaultUsername && !usernameInput.value) {
+    usernameInput.value = cfg.defaultUsername;
+  }
+  
+  if (cfg.hasYoutubeKey) {
+    ytBadge.textContent = 'YT: On';
+    ytBadge.classList.add('on');
+    ytBadge.title = 'YouTube API aktif (bisa menampilkan thumbnail)';
+  } else {
+    ytBadge.title = 'YouTube API belum diatur di .env (hanya fallback icon)';
+  }
+
+  if (cfg.requestPrefix) {
+    simCommentInput.placeholder = `${cfg.requestPrefix} Shape of You`;
+  }
+})();
+
+function setupSocketEvents() {
+  socket.on('queue_update', (state) => {
+    renderNowPlaying(state.currentSong);
+    renderQueue(state.queue);
+    renderHistory(state.history);
+  });
+
+  socket.on('connected', (data) => {
+    isConnected = true;
+    statusBadge.textContent = `● LIVE @${data.username}`;
+    statusBadge.classList.add('connected');
+    connectBtn.textContent = 'DISCONNECT';
+    showToast(`✓ Terhubung ke @${data.username}`);
+  });
+
+  socket.on('disconnected', () => {
+    isConnected = false;
+    statusBadge.textContent = '● OFFLINE';
+    statusBadge.classList.remove('connected');
+    connectBtn.textContent = 'CONNECT';
+  });
+
+  socket.on('error', (data) => {
+    showToast(`Error: ${data.message}`, 'error');
+  });
+
+  socket.on('comment', (data) => {
+    addComment(data.user, data.comment, false);
+  });
+
+  socket.on('song_request', (data) => {
+    addComment(data.requestedBy, `!req ${data.originalQuery}`, true);
+    showToast(`🎵 @${data.requestedBy} request: ${data.title}`);
+  });
+}
 
 // ─── SIMULATOR ───────────────────────────────────
 const simUserInput    = document.getElementById('sim-user');

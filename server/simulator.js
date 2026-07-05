@@ -11,7 +11,7 @@ const config = require('./config');
  * @param {string} comment - isi komentar
  * @param {Function} onEvent - callback event (sama dengan di tiktok.js)
  */
-async function simulateComment(user, comment, onEvent) {
+async function simulateComment(userId, user, comment, onEvent) {
   comment = comment.trim();
   const prefix = config.REQUEST_PREFIX;
 
@@ -38,7 +38,7 @@ async function simulateComment(user, comment, onEvent) {
       originalQuery: songQuery,
     };
 
-    queue.addToQueue(newSong);
+    queue.addToQueue(userId, newSong);
     onEvent({ type: 'song_request', data: newSong });
   }
 }
@@ -47,7 +47,7 @@ async function simulateComment(user, comment, onEvent) {
  * Demo otomatis — kirim beberapa request sekaligus
  * @param {Function} onEvent
  */
-async function runDemo(onEvent) {
+async function runDemo(userId, onEvent) {
   const demoRequests = [
     { user: 'penonton_keren',   comment: '!req Shape of You Ed Sheeran' },
     { user: 'user_tiktok123',   comment: '!req Hati-Hati di Jalan Pamungkas' },
@@ -58,7 +58,7 @@ async function runDemo(onEvent) {
   ];
 
   for (const req of demoRequests) {
-    await simulateComment(req.user, req.comment, onEvent);
+    await simulateComment(userId, req.user, req.comment, onEvent);
     // Jeda antar komentar agar terasa natural
     await new Promise(resolve => setTimeout(resolve, 800));
   }

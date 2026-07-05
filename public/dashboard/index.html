@@ -23,13 +23,22 @@
       <span class="badge" id="status-badge">● OFFLINE</span>
       <span class="badge yt-badge" id="yt-badge" title="Status YouTube API Key">YT: —</span>
     </div>
-    <div class="header-right">
+    <div class="header-right" style="display: flex; gap: 20px; align-items: center;">
+      <!-- KONEKSI TIKTOK -->
       <div class="connect-wrap">
         <div class="connect-form">
           <input type="text" id="username-input" placeholder="masukkan @tiktok_username" autocomplete="off" />
           <button id="connect-btn" class="btn btn-primary">CONNECT</button>
         </div>
         <div class="connect-hint" id="connect-hint">Masukkan username TikTok yang sedang live, lalu klik CONNECT</div>
+      </div>
+      <!-- PROFIL SUPABASE -->
+      <div id="user-profile" style="display:none; align-items:center; gap:10px; border-left: 1px solid var(--border); padding-left: 20px;">
+        <img id="user-avatar" src="" alt="Avatar" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--border);">
+        <div style="display:flex; flex-direction:column; align-items:flex-start;">
+          <span id="user-name" style="font-size:12px; font-weight:bold; color:var(--text);">User</span>
+          <a href="#" id="logout-btn" style="font-size:11px; color:var(--accent); text-decoration:none;">Logout</a>
+        </div>
       </div>
     </div>
   </header>
@@ -51,11 +60,18 @@
     <!-- KOLOM KIRI: SEDANG DIMAINKAN + ANTRIAN -->
     <section class="left-col">
 
-      <!-- OVERLAY PREVIEW -->
+      <!-- OVERLAY PREVIEW & OBS LINK -->
       <div class="card card-preview">
         <div class="card-label">▌ OVERLAY PREVIEW (LIVE)</div>
         <div class="preview-container">
           <iframe id="overlay-iframe" src="/overlay" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+          <div style="font-size: 11px; color: var(--accent); margin-bottom: 5px;">RAHASIA: Masukkan URL ini ke "Browser Source" di OBS Studio</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="obs-url-input" readonly value="Memuat URL..." style="flex: 1; padding: 6px; font-family: monospace; font-size: 11px; background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px;" />
+            <button id="copy-obs-btn" class="btn btn-sim" style="padding: 6px 12px; font-size: 11px;">COPY</button>
+          </div>
         </div>
       </div>
 
@@ -134,6 +150,7 @@
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>

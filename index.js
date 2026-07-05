@@ -10,6 +10,7 @@ const config    = require('./server/config');
 const queue     = require('./server/queue');
 const tiktok    = require('./server/tiktok');
 const simulator = require('./server/simulator');
+const supabase  = require('./server/db');
 
 // Tangkap semua error tidak terduga agar server tidak crash
 process.on('uncaughtException', (err) => {
@@ -47,6 +48,7 @@ app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
 app.get('/',          (req, res) => res.redirect('/dashboard'));
+app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'login',     'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html')));
 app.get('/overlay',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'overlay',   'index.html')));
 
@@ -65,27 +67,53 @@ app.get('/health', (req, res) => {
 // GET konfigurasi publik (non-sensitif) — untuk auto-fill dashboard
 app.get('/api/config', (req, res) => {
   res.json({
-    defaultUsername: config.TIKTOK_USERNAME || null, // null = user harus isi sendiri
+    defaultUsername: config.TIKTOK_USERNAME || null,
     requestPrefix:   config.REQUEST_PREFIX,
     maxQueueSize:    config.MAX_QUEUE_SIZE,
     hasYoutubeKey:   !!(config.YOUTUBE_API_KEY && !['your_youtube_api_key_here', ''].includes(config.YOUTUBE_API_KEY)),
+    supabaseUrl:     process.env.SUPABASE_URL || '',
+    supabaseKey:     process.env.SUPABASE_KEY || '',
   });
 });
 
+// Middleware Autentikasi (JWT / Query Token)
+const authenticate = async (req, res, next) => {
+  // 1. Cek JWT dari Authorization header (Untuk Dashboard)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      req.userId = user.id;
+      return next();
+    }
+  }
+
+  // 2. Cek Token dari Query parameter (Untuk OBS Overlay yang statis)
+  const queryToken = req.query.token;
+  if (queryToken) {
+    // Sebagai penyederhanaan, token OBS adalah User UUID dari Supabase
+    req.userId = queryToken;
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
 // GET state lengkap
-app.get('/api/state', (req, res) => {
-  res.json(queue.getState());
+app.get('/api/state', authenticate, (req, res) => {
+  res.json(queue.getState(req.userId));
 });
 
 // POST connect ke TikTok Live
-app.post('/api/connect', (req, res) => {
+app.post('/api/connect', authenticate, (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: 'Username diperlukan' });
 
-  tiktok.connect(username, (event) => {
-    io.emit(event.type, event.data);
+  tiktok.connect(req.userId, username, (event) => {
+    io.to(req.userId).emit(event.type, event.data);
     if (event.type === 'song_request') {
-      io.emit('queue_update', queue.getState());
+      io.to(req.userId).emit('queue_update', queue.getState(req.userId));
     }
   });
 
@@ -93,44 +121,44 @@ app.post('/api/connect', (req, res) => {
 });
 
 // POST disconnect
-app.post('/api/disconnect', (req, res) => {
-  tiktok.disconnect();
+app.post('/api/disconnect', authenticate, (req, res) => {
+  tiktok.disconnect(req.userId);
   res.json({ success: true });
 });
 
 // POST next song
-app.post('/api/next', (req, res) => {
-  const song = queue.nextSong();
-  io.emit('queue_update', queue.getState());
-  res.json({ currentSong: song, ...queue.getState() });
+app.post('/api/next', authenticate, (req, res) => {
+  const song = queue.nextSong(req.userId);
+  io.to(req.userId).emit('queue_update', queue.getState(req.userId));
+  res.json({ currentSong: song, ...queue.getState(req.userId) });
 });
 
 // POST stop song (paksa berhenti)
-app.post('/api/stop', (req, res) => {
-  queue.stopCurrent();
-  io.emit('queue_update', queue.getState());
-  res.json({ success: true, ...queue.getState() });
+app.post('/api/stop', authenticate, (req, res) => {
+  queue.stopCurrent(req.userId);
+  io.to(req.userId).emit('queue_update', queue.getState(req.userId));
+  res.json({ success: true, ...queue.getState(req.userId) });
 });
 
 // DELETE hapus lagu dari antrian
-app.delete('/api/queue/:id', (req, res) => {
-  queue.removeSong(parseFloat(req.params.id));
-  io.emit('queue_update', queue.getState());
-  res.json(queue.getState());
+app.delete('/api/queue/:id', authenticate, (req, res) => {
+  queue.removeSong(req.userId, parseFloat(req.params.id));
+  io.to(req.userId).emit('queue_update', queue.getState(req.userId));
+  res.json(queue.getState(req.userId));
 });
 
 // DELETE clear semua antrian
-app.delete('/api/queue', (req, res) => {
-  queue.clearQueue();
-  io.emit('queue_update', queue.getState());
+app.delete('/api/queue', authenticate, (req, res) => {
+  queue.clearQueue(req.userId);
+  io.to(req.userId).emit('queue_update', queue.getState(req.userId));
   res.json({ success: true });
 });
 
 // ─── SIMULATOR ───────────────────────────────────────────────
-const simEventHandler = (event) => {
-  io.emit(event.type, event.data);
+const getSimEventHandler = (userId) => (event) => {
+  io.to(userId).emit(event.type, event.data);
   if (event.type === 'song_request') {
-    io.emit('queue_update', queue.getState());
+    io.to(userId).emit('queue_update', queue.getState(userId));
   }
 };
 
@@ -138,22 +166,48 @@ const simEventHandler = (event) => {
 const simEnabled = config.NODE_ENV !== 'production' || config.ENABLE_SIMULATOR === 'true';
 
 if (simEnabled) {
-  app.post('/api/simulate', async (req, res) => {
+  app.post('/api/simulate', authenticate, async (req, res) => {
     const { user = 'test_user', comment } = req.body;
     if (!comment) return res.status(400).json({ error: 'Comment diperlukan' });
-    await simulator.simulateComment(user, comment, simEventHandler);
-    res.json({ success: true, state: queue.getState() });
+    await simulator.simulateComment(req.userId, user, comment, getSimEventHandler(req.userId));
+    res.json({ success: true, state: queue.getState(req.userId) });
   });
 
-  app.post('/api/demo', async (req, res) => {
+  app.post('/api/demo', authenticate, async (req, res) => {
     res.json({ success: true, message: 'Demo dimulai...' });
-    simulator.runDemo(simEventHandler);
+    simulator.runDemo(req.userId, getSimEventHandler(req.userId));
   });
 }
 
 // ─── SOCKET.IO ───────────────────────────────────────────────
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth.token || socket.handshake.query.token;
+  if (!token) return next(new Error('Authentication error'));
+  
+  // Cek apakah itu JWT dari dashboard atau sekadar token query dari Overlay
+  if (token.split('.').length === 3) { // Deteksi JWT
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      socket.userId = user.id;
+      return next();
+    }
+  } else {
+    // Token OBS (UUID murni)
+    socket.userId = token;
+    return next();
+  }
+  
+  next(new Error('Authentication error'));
+});
+
 io.on('connection', (socket) => {
-  socket.emit('queue_update', queue.getState());
+  // Masukkan koneksi socket ke dalam Room khusus userId mereka
+  socket.join(socket.userId);
+  socket.emit('queue_update', queue.getState(socket.userId));
+
+  socket.on('disconnect', () => {
+    // Cleanup bila perlu
+  });
 });
 
 // ─── 404 HANDLER ─────────────────────────────────────────────

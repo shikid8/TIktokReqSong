@@ -1,56 +1,54 @@
-// TikTok Live Connector — listen komentar dari TikTok Live
-// Menggunakan dynamic import() karena tiktok-live-connector adalah ES Module
+// TikTok Live Connector (Multi-Tenant)
 const config = require('./config');
 const { searchSong } = require('./youtube');
 const queue  = require('./queue');
 
-let tiktokClient = null;
+const connections = new Map();
 let WebcastPushConnection = null;
 
-/** Lazy-load ES Module tiktok-live-connector */
 async function loadConnector() {
   if (WebcastPushConnection) return;
   const mod = await import('tiktok-live-connector');
   WebcastPushConnection = mod.WebcastPushConnection;
 }
 
-/**
- * Mulai koneksi ke TikTok Live
- * @param {string} username - TikTok username (tanpa @)
- * @param {Function} onEvent - callback event
- */
-async function connect(username, onEvent) {
+async function connect(userId, username, onEvent) {
   try {
     await loadConnector();
   } catch (err) {
-    console.error('[TikTok] Gagal load connector:', err.message);
+    console.error(`[TikTok ${userId}] Gagal load connector:`, err.message);
     onEvent({ type: 'error', data: { message: 'Gagal load TikTok connector' } });
     return;
   }
 
-  if (tiktokClient) {
-    try { tiktokClient.disconnect(); } catch (_) {}
+  // Jika user sudah terkoneksi sebelumnya, diskonek dulu
+  if (connections.has(userId)) {
+    try { connections.get(userId).disconnect(); } catch (_) {}
+    connections.delete(userId);
   }
 
-  tiktokClient = new WebcastPushConnection(username, {
+  const tiktokClient = new WebcastPushConnection(username, {
     processInitialData:    false,
     enableExtendedGiftInfo: false,
     enableWebsocketUpgrade: true,
     requestPollingIntervalMs: 2000,
   });
 
+  connections.set(userId, tiktokClient);
+
   tiktokClient.on('connected', (state) => {
-    console.log(`[TikTok] Terhubung ke live @${username} | viewers: ${state.viewerCount}`);
+    console.log(`[TikTok ${userId}] Terhubung ke @${username}`);
     onEvent({ type: 'connected', data: { username, viewerCount: state.viewerCount } });
   });
 
   tiktokClient.on('disconnected', () => {
-    console.log('[TikTok] Terputus dari live.');
+    console.log(`[TikTok ${userId}] Terputus dari @${username}`);
     onEvent({ type: 'disconnected', data: {} });
+    connections.delete(userId);
   });
 
   tiktokClient.on('error', (err) => {
-    console.error('[TikTok] Error:', err.message);
+    console.error(`[TikTok ${userId}] Error:`, err.message);
     onEvent({ type: 'error', data: { message: err.message } });
   });
 
@@ -59,15 +57,13 @@ async function connect(username, onEvent) {
     const user    = data.uniqueId || data.nickname || 'unknown';
     const prefix  = config.REQUEST_PREFIX;
 
-    // Emit komentar mentah ke dashboard
     onEvent({ type: 'comment', data: { user, comment } });
 
-    // Cek apakah komentar adalah request lagu
     if (comment.toLowerCase().startsWith(prefix.toLowerCase())) {
       const songQuery = comment.slice(prefix.length).trim();
       if (!songQuery) return;
 
-      console.log(`[Request] @${user}: ${songQuery}`);
+      console.log(`[Request ${userId}] @${user}: ${songQuery}`);
 
       const songData = await searchSong(songQuery);
       if (!songData) {
@@ -82,7 +78,7 @@ async function connect(username, onEvent) {
         originalQuery: songQuery,
       };
 
-      queue.addToQueue(newSong);
+      queue.addToQueue(userId, newSong);
       onEvent({ type: 'song_request', data: newSong });
     }
   });
@@ -90,15 +86,16 @@ async function connect(username, onEvent) {
   try {
     await tiktokClient.connect();
   } catch (err) {
-    console.error('[TikTok] Gagal connect:', err.message);
+    console.error(`[TikTok ${userId}] Gagal connect:`, err.message);
     onEvent({ type: 'error', data: { message: `Gagal connect: ${err.message}` } });
+    connections.delete(userId);
   }
 }
 
-function disconnect() {
-  if (tiktokClient) {
-    try { tiktokClient.disconnect(); } catch (_) {}
-    tiktokClient = null;
+function disconnect(userId) {
+  if (connections.has(userId)) {
+    try { connections.get(userId).disconnect(); } catch (_) {}
+    connections.delete(userId);
   }
 }
 
