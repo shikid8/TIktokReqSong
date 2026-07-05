@@ -97,6 +97,13 @@ app.post('/api/next', (req, res) => {
   res.json({ currentSong: song, ...queue.getState() });
 });
 
+// POST stop song (paksa berhenti)
+app.post('/api/stop', (req, res) => {
+  queue.stopCurrent();
+  io.emit('queue_update', queue.getState());
+  res.json({ success: true, ...queue.getState() });
+});
+
 // DELETE hapus lagu dari antrian
 app.delete('/api/queue/:id', (req, res) => {
   queue.removeSong(parseFloat(req.params.id));

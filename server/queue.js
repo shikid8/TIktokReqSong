@@ -45,6 +45,18 @@ function removeSong(id) {
 }
 
 /**
+ * Hentikan lagu yang sedang berjalan secara paksa (tanpa auto next)
+ */
+function stopCurrent() {
+  if (currentSong) {
+    history.unshift(currentSong);
+    if (history.length > 50) history.pop();
+  }
+  currentSong = null;
+  return currentSong;
+}
+
+/**
  * Kosongkan seluruh antrian
  */
 function clearQueue() {
@@ -63,4 +75,4 @@ function getState() {
   };
 }
 
-module.exports = { addToQueue, nextSong, removeSong, clearQueue, getState };
+module.exports = { addToQueue, nextSong, removeSong, clearQueue, stopCurrent, getState };

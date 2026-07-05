@@ -9,6 +9,7 @@ const connectHint    = document.getElementById('connect-hint');
 const usernameInput  = document.getElementById('username-input');
 const connectBtn     = document.getElementById('connect-btn');
 const nextBtn        = document.getElementById('next-btn');
+const stopBtn        = document.getElementById('stop-btn');
 const clearBtn       = document.getElementById('clear-btn');
 const audioToggleBtn = document.getElementById('audio-toggle-btn');
 const nowPlayingCard = document.getElementById('now-playing-content');
@@ -193,7 +194,14 @@ connectBtn.addEventListener('click', async () => {
 });
 
 nextBtn.addEventListener('click', async () => {
-  await apiFetch('/api/next', { method: 'POST' });
+  const res = await apiFetch('/api/next', { method: 'POST' });
+  if (res.currentSong) showToast(`Memutar: ${res.currentSong.title}`);
+  else showToast('Tidak ada antrian lagi.');
+});
+
+stopBtn.addEventListener('click', async () => {
+  const res = await apiFetch('/api/stop', { method: 'POST' });
+  showToast('Lagu dihentikan secara paksa.');
 });
 
 clearBtn.addEventListener('click', async () => {
