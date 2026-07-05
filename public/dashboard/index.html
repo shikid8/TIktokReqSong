@@ -120,6 +120,18 @@
 
   </main>
 
+  <!-- CUSTOM CONFIRM MODAL -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>⚠️ Hapus Semua Antrian</h3>
+      <p>Apakah Anda yakin ingin mengosongkan seluruh antrian lagu?</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn">BATAL</button>
+        <button id="modal-confirm" class="btn btn-danger">YA, HAPUS</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>

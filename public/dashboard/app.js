@@ -18,6 +18,10 @@ const queueCount     = document.getElementById('queue-count');
 const commentLog     = document.getElementById('comment-log');
 const historyList    = document.getElementById('history-list');
 
+const confirmModal   = document.getElementById('confirm-modal');
+const modalCancel    = document.getElementById('modal-cancel');
+const modalConfirm   = document.getElementById('modal-confirm');
+
 // ─── YOUTUBE PLAYER ──────────────────────────────
 let ytPlayer = null;
 let ytReady = false;
@@ -204,11 +208,18 @@ stopBtn.addEventListener('click', async () => {
   showToast('Lagu dihentikan secara paksa.');
 });
 
-clearBtn.addEventListener('click', async () => {
-  if (confirm('Hapus semua antrian?')) {
-    await apiFetch('/api/queue', { method: 'DELETE' });
-    showToast('Antrian dibersihkan.');
-  }
+clearBtn.addEventListener('click', () => {
+  confirmModal.classList.remove('hidden');
+});
+
+modalCancel.addEventListener('click', () => {
+  confirmModal.classList.add('hidden');
+});
+
+modalConfirm.addEventListener('click', async () => {
+  confirmModal.classList.add('hidden');
+  await apiFetch('/api/queue', { method: 'DELETE' });
+  showToast('Antrian berhasil dibersihkan.');
 });
 
 audioToggleBtn.addEventListener('click', () => {

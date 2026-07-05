@@ -1,0 +1,135 @@
+// OBS Overlay — app.js (text-only)
+const socket = io();
+
+const overlay      = document.getElementById('overlay');
+const ovTitle      = document.getElementById('ov-title');
+const ovArtist     = document.getElementById('ov-artist');
+const ovDuration   = document.getElementById('ov-duration');
+const ovRequester  = document.getElementById('ov-requester');
+const ovNext       = document.getElementById('ov-next');
+const nextRow      = document.getElementById('next-row');
+
+let ytPlayer = null;
+let ytReady = false;
+
+// Callback dari YouTube API
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('ytplayer', {
+    height: '200',
+    width: '200',
+    host: 'https://www.youtube.com',
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      disablekb: 1,
+      fs: 0,
+      rel: 0,
+      enablejsapi: 1,
+      origin: window.location.origin
+    },
+    events: {
+      onReady: () => { ytReady = true; },
+      onStateChange: (e) => {
+        // Jika lagu habis (ENDED = 0), panggil API next otomatis
+        if (e.data === YT.PlayerState.ENDED) {
+          fetch('/api/next', { method: 'POST' }).catch(console.error);
+        }
+      },
+      onError: (e) => { 
+        console.error('YT Player Error:', e.data); 
+        // Jika error, lewati otomatis agar tidak nyangkut
+        fetch('/api/next', { method: 'POST' }).catch(console.error);
+      }
+    }
+  });
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/**
+ * Aktifkan efek marquee jika judul lebih panjang dari container
+ */
+function applyMarquee(el) {
+  el.classList.remove('long');
+  // Cek apakah teks melebihi lebar container
+  requestAnimationFrame(() => {
+    if (el.scrollWidth > el.clientWidth + 4) {
+      const overflowRatio = el.scrollWidth / el.clientWidth;
+      el.style.setProperty('--scroll-dist', `-${(overflowRatio - 1) * 100 + 10}%`);
+      el.classList.add('long');
+    }
+  });
+}
+
+function renderOverlay(state) {
+  const { currentSong, queue } = state;
+
+  if (!currentSong) {
+    if (ytReady && ytPlayer.stopVideo) ytPlayer.stopVideo();
+    
+    // Tampilkan UI Kosong / Menunggu Request
+    overlay.classList.remove('hidden');
+    ovTitle.textContent = 'Menunggu Lagu...';
+    ovTitle.style.animation = 'none';
+    ovTitle.classList.remove('long');
+    
+    ovArtist.textContent = 'Ketik !req [judul] di live chat';
+    ovDuration.textContent = '??:??';
+    
+    ovRequester.style.display = 'none';
+    nextRow.style.display = 'none';
+    return;
+  }
+
+  // Tampilkan UI Normal
+  overlay.classList.remove('hidden');
+  ovRequester.style.display = 'block';
+
+  // Auto-play lagu jika videoId tersedia
+  if (ytReady && ytPlayer.loadVideoById && currentSong.videoId) {
+    // Hindari memutar ulang lagu yang sama jika status baru masuk
+    const currentVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
+    if (currentVid !== currentSong.videoId) {
+      ytPlayer.loadVideoById(currentSong.videoId);
+    }
+  }
+
+  // Tampilkan overlay
+  overlay.classList.remove('hidden');
+
+  // Judul lagu & Meta
+  const newTitle = currentSong.title || '—';
+  if (ovTitle.textContent !== newTitle) {
+    ovTitle.textContent = newTitle;
+    ovTitle.style.animation = 'none';
+    ovArtist.textContent = currentSong.channelTitle || 'Unknown Artist';
+    ovDuration.textContent = currentSong.duration || '??:??';
+    
+    requestAnimationFrame(() => {
+      ovTitle.style.animation = '';
+      applyMarquee(ovTitle);
+    });
+  }
+
+  // Requester
+  ovRequester.textContent = `req by @${currentSong.requestedBy || '—'}`;
+
+  // Next up
+  const nextSong = queue && queue[0];
+  if (nextSong) {
+    nextRow.style.display = 'flex';
+    ovNext.textContent = `${nextSong.title}  ·  @${nextSong.requestedBy}`;
+  } else {
+    nextRow.style.display = 'none';
+  }
+}
+
+socket.on('queue_update', renderOverlay);
+
+// Init
+fetch('/api/state')
+  .then(r => r.json())
+  .then(renderOverlay)
+  .catch(console.error);
