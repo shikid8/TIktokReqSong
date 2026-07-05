@@ -47,7 +47,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
-app.get('/',          (req, res) => res.redirect('/dashboard'));
+app.get('/',          (req, res) => res.redirect('/login'));
 app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'login',     'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html')));
 app.get('/overlay',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'overlay',   'index.html')));
