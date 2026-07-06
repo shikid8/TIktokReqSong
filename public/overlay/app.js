@@ -132,7 +132,12 @@ function renderOverlay(state) {
 socket.on('queue_update', renderOverlay);
 
 // Init
-fetch('/api/state')
-  .then(r => r.json())
-  .then(renderOverlay)
-  .catch(console.error);
+if (token) {
+  fetch(`/api/state?token=${token}`)
+    .then(r => r.json())
+    .then(renderOverlay)
+    .catch(console.error);
+} else {
+  // Jika dibuka tanpa token (misal iframe sebelum diatur)
+  ovTitle.textContent = 'Menunggu Token...';
+}

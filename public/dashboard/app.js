@@ -1,7 +1,7 @@
 // Dashboard — app.js (Multi-Tenant)
 let socket = null;
 let isConnected = false;
-let supabase = null;
+let sbClient = null;
 let accessToken = null;
 let currentUser = null;
 
@@ -259,8 +259,8 @@ audioToggleBtn.addEventListener('click', () => {
   const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
 
   if (cfg.supabaseUrl && cfg.supabaseKey) {
-    supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-    const { data: { session } } = await supabase.auth.getSession();
+    sbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    const { data: { session } } = await sbClient.auth.getSession();
     
     if (!session) {
       window.location.href = '/login';
@@ -275,9 +275,10 @@ audioToggleBtn.addEventListener('click', () => {
     document.getElementById('user-avatar').src = currentUser.user_metadata.avatar_url || '';
     document.getElementById('user-name').textContent = currentUser.user_metadata.full_name || currentUser.email;
 
-    // Tampilkan link OBS
+    // Tampilkan link OBS & Atur iframe preview
     const obsUrl = `${window.location.origin}/overlay?token=${currentUser.id}`;
     document.getElementById('obs-url-input').value = obsUrl;
+    document.getElementById('overlay-iframe').src = obsUrl;
 
     document.getElementById('copy-obs-btn').addEventListener('click', () => {
       navigator.clipboard.writeText(obsUrl);
@@ -285,7 +286,7 @@ audioToggleBtn.addEventListener('click', () => {
     });
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
-      await supabase.auth.signOut();
+      await sbClient.auth.signOut();
       window.location.href = '/login';
     });
   }
