@@ -3,6 +3,7 @@ const express  = require('express');
 const http     = require('http');
 const { Server } = require('socket.io');
 const path     = require('path');
+const fs       = require('fs');
 const cors     = require('cors');
 const helmet   = require('helmet');
 
@@ -47,10 +48,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
-app.get('/',          (req, res) => res.redirect('/login'));
-app.get('/login',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'login',     'index.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard', 'index.html')));
-app.get('/overlay',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'overlay',   'index.html')));
+app.get('/',      (req, res) => res.redirect('/login'));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login', 'index.html')));
+
+// Dashboard — injeksi konfigurasi Supabase langsung ke HTML agar tidak terekspos di API publik
+app.get('/dashboard', (req, res) => {
+  const htmlPath = path.join(__dirname, 'public', 'dashboard', 'index.html');
+  const html = fs.readFileSync(htmlPath, 'utf8');
+  const supabaseCfg = JSON.stringify({
+    url: process.env.SUPABASE_URL || '',
+    key: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_KEY || '',
+  });
+  const injected = html.replace(
+    '</head>',
+    `<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
+  );
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(injected);
+});
+
+// Overlay — hanya untuk OBS, tidak perlu diindeks mesin pencari
+app.get('/overlay', (req, res) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'public', 'overlay', 'index.html'));
+});
 
 // ─── HEALTH CHECK (untuk Railway / Render) ──────────────────
 app.get('/health', (req, res) => {
@@ -64,15 +86,13 @@ app.get('/health', (req, res) => {
 
 // ─── REST API ────────────────────────────────────────────────
 
-// GET konfigurasi publik (non-sensitif) — untuk auto-fill dashboard
+// GET konfigurasi publik (non-sensitif) — kunci Supabase TIDAK disertakan di sini
 app.get('/api/config', (req, res) => {
   res.json({
     defaultUsername: config.TIKTOK_USERNAME || null,
     requestPrefix:   config.REQUEST_PREFIX,
     maxQueueSize:    config.MAX_QUEUE_SIZE,
     hasYoutubeKey:   !!(config.YOUTUBE_API_KEY && !['your_youtube_api_key_here', ''].includes(config.YOUTUBE_API_KEY)),
-    supabaseUrl:     process.env.SUPABASE_URL || '',
-    supabaseKey:     process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_KEY || '',
   });
 });
 

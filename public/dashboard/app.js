@@ -262,11 +262,14 @@ audioToggleBtn.addEventListener('click', () => {
 
 // ─── INIT & AUTHENTICATION ───────────────────────
 (async () => {
-  // Load konfigurasi dari server
+  // Ambil config non-sensitif dari server
   const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
 
-  if (cfg.supabaseUrl && cfg.supabaseKey) {
-    sbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+  // Kunci Supabase diinjeksi langsung ke HTML oleh server (bukan dari API publik)
+  const sbCfg = window.__SUPABASE__ || {};
+
+  if (sbCfg.url && sbCfg.key) {
+    sbClient = window.supabase.createClient(sbCfg.url, sbCfg.key);
     const { data: { session } } = await sbClient.auth.getSession();
     
     // Jika tidak ada session tapi ada token di URL (proses login sedang berlangsung)
@@ -311,7 +314,7 @@ audioToggleBtn.addEventListener('click', () => {
     document.body.innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0d0d0d; color:#fff; font-family:monospace; text-align:center;">
         <h2 style="color:#e05252;">Sistem Gagal Memuat</h2>
-        <p style="margin: 20px 0; color:#888;">Konfigurasi Supabase tidak lengkap di server.<br>Pastikan Anda telah memasukkan <strong>SUPABASE_PUBLISHABLE_KEY</strong> di menu Environment Variables (Render).</p>
+        <p style="margin: 20px 0; color:#888;">Konfigurasi Supabase tidak ditemukan.<br>Pastikan <strong>SUPABASE_URL</strong> dan <strong>SUPABASE_PUBLISHABLE_KEY</strong> sudah diatur di Environment Variables Render.</p>
       </div>
     `;
     return;
