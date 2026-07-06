@@ -395,6 +395,42 @@ body {
   color: #0d0d0d;
 }
 
+/* ── RESPONSIVE DESIGN ────────────────────────── */
+@media (max-width: 992px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  .header-right {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: flex-start !important;
+  }
+  .connect-wrap {
+    align-items: flex-start;
+    width: 100%;
+  }
+  .connect-form {
+    width: 100%;
+  }
+  .connect-form input {
+    flex: 1;
+  }
+  #user-profile {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+    width: 100%;
+  }
+}
+
 /* ── CONTROLS ─────────────────────────────────── */
 .controls {
   display: flex;
