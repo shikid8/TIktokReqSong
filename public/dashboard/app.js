@@ -317,6 +317,14 @@ audioToggleBtn.addEventListener('click', () => {
       await sbClient.auth.signOut();
       window.location.href = '/login';
     });
+  } else {
+    document.body.innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0d0d0d; color:#fff; font-family:monospace; text-align:center;">
+        <h2 style="color:#e05252;">Sistem Gagal Memuat</h2>
+        <p style="margin: 20px 0; color:#888;">Konfigurasi Supabase tidak lengkap di server.<br>Pastikan Anda telah memasukkan <strong>SUPABASE_PUBLISHABLE_KEY</strong> di menu Environment Variables (Render).</p>
+      </div>
+    `;
+    return;
   }
 
   // Koneksi Socket.io menggunakan Token JWT
