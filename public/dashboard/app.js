@@ -303,15 +303,9 @@ audioToggleBtn.addEventListener('click', () => {
     document.getElementById('user-avatar').src = currentUser.user_metadata.avatar_url || '';
     document.getElementById('user-name').textContent = currentUser.user_metadata.full_name || currentUser.email;
 
-    // Tampilkan link OBS & Atur iframe preview
+    // Atur iframe preview
     const obsUrl = `${window.location.origin}/overlay?token=${currentUser.id}`;
-    document.getElementById('obs-url-input').value = obsUrl;
     document.getElementById('overlay-iframe').src = obsUrl;
-
-    document.getElementById('copy-obs-btn').addEventListener('click', () => {
-      navigator.clipboard.writeText(obsUrl);
-      showToast('URL OBS disalin ke clipboard!');
-    });
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
       await sbClient.auth.signOut();
