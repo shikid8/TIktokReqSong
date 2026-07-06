@@ -72,7 +72,7 @@ app.get('/api/config', (req, res) => {
     maxQueueSize:    config.MAX_QUEUE_SIZE,
     hasYoutubeKey:   !!(config.YOUTUBE_API_KEY && !['your_youtube_api_key_here', ''].includes(config.YOUTUBE_API_KEY)),
     supabaseUrl:     process.env.SUPABASE_URL || '',
-    supabaseKey:     process.env.SUPABASE_KEY || '',
+    supabaseKey:     process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_KEY || '',
   });
 });
 
