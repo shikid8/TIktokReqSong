@@ -153,6 +153,39 @@ body {
   font-style: italic;
 }
 
+/* ── PROGRESS BAR ─────────────────────────────── */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.elapsed {
+  font-size: 9px;
+  font-family: var(--font);
+  color: var(--next-col);
+  opacity: 0.8;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 2px;
+  background: rgba(200, 242, 94, 0.12);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 1px;
+  transition: width 0.5s linear;
+}
+
 /* ── NEXT ROW ─────────────────────────────────── */
 .next-row {
   display: flex;
