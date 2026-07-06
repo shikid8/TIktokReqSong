@@ -44,7 +44,6 @@ const io = new Server(server, {
 });
 
 // ─── MIDDLEWARE ─────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
@@ -84,6 +83,9 @@ app.get('/overlay', (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'public', 'overlay', 'index.html'));
 });
+
+// Static files (CSS, JS, images) — setelah route handler HTML agar injeksi config berjalan lebih dulu
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── HEALTH CHECK (untuk Railway / Render) ──────────────────
 app.get('/health', (req, res) => {
