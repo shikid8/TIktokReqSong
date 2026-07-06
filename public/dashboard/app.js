@@ -267,8 +267,14 @@ audioToggleBtn.addEventListener('click', () => {
 const volumeSlider = document.getElementById('volume-slider');
 const volumeLabel  = document.getElementById('volume-label');
 
-// Kirim volume ke iframe overlay via postMessage
+// Kirim volume ke overlay — via Socket.IO (untuk overlay di tab terpisah)
+// sekaligus via postMessage (untuk iframe preview di dashboard)
 function sendVolumeToOverlay(vol, muted) {
+  // 1. Socket.IO → server → overlay (bekerja meski overlay dibuka di tab/browser terpisah)
+  if (socket) {
+    socket.emit('volume_change', { value: vol, muted });
+  }
+  // 2. postMessage → iframe preview di dalam dashboard
   const iframe = document.getElementById('overlay-iframe');
   if (iframe && iframe.contentWindow) {
     iframe.contentWindow.postMessage({ type: 'volume', value: vol, muted }, '*');

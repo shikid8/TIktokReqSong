@@ -6,8 +6,6 @@ const socket = io({ query: { token } });
 
 const overlay       = document.getElementById('overlay');
 const ovTitle       = document.getElementById('ov-title');
-const ovArtist      = document.getElementById('ov-artist');
-const ovDuration    = document.getElementById('ov-duration');
 const ovRequester   = document.getElementById('ov-requester');
 const ovNext        = document.getElementById('ov-next');
 const nextRow       = document.getElementById('next-row');
@@ -18,10 +16,11 @@ const ovTotal       = document.getElementById('ov-total');
 
 let ytPlayer   = null;
 let ytReady    = false;
-let timerInterval = null;  // interval untuk update progress setiap detik
-let nextCooldown  = false; // debounce agar auto-next tidak terpicu dua kali
+let timerInterval = null;
+let nextCooldown  = false;
+let lastVideoId   = null;
 
-// ─── FORMAT DETIK → MM:SS ──────────────────────
+// ─── FORMAT DETIK → M:SS ────────────────────────
 function fmtSec(sec) {
   if (!isFinite(sec) || sec < 0) return '0:00';
   const m = Math.floor(sec / 60);
@@ -29,7 +28,7 @@ function fmtSec(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// ─── TIMER BERJALAN ─────────────────────────────
+// ─── TIMER PROGRESS ─────────────────────────────
 function startTimer() {
   stopTimer();
   timerInterval = setInterval(() => {
@@ -37,63 +36,50 @@ function startTimer() {
     const elapsed  = ytPlayer.getCurrentTime();
     const duration = ytPlayer.getDuration();
     if (!duration || duration <= 0) return;
-
     ovElapsed.textContent = fmtSec(elapsed);
     ovTotal.textContent   = fmtSec(duration);
-    const pct = Math.min((elapsed / duration) * 100, 100);
-    progressBar.style.width = pct + '%';
+    progressBar.style.width = Math.min((elapsed / duration) * 100, 100) + '%';
   }, 500);
 }
 
 function stopTimer() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  ovElapsed.textContent    = '0:00';
-  ovTotal.textContent      = '0:00';
-  progressBar.style.width  = '0%';
+  ovElapsed.textContent   = '0:00';
+  ovTotal.textContent     = '0:00';
+  progressBar.style.width = '0%';
 }
 
-// ─── TRIGGER AUTO-NEXT (dengan debounce) ────────
+// ─── AUTO-NEXT (debounce 5 detik) ───────────────
 function triggerNext() {
   if (nextCooldown) return;
   nextCooldown = true;
-  console.log('[Overlay] Auto-next dipanggil');
+  console.log('[Overlay] Auto-next');
   fetch(`/api/next?token=${token}`, { method: 'POST' }).catch(console.error);
-  // Cooldown 5 detik agar tidak double-trigger
   setTimeout(() => { nextCooldown = false; }, 5000);
 }
 
 // ─── YOUTUBE IFRAME API ─────────────────────────
 function onYouTubeIframeAPIReady() {
   ytPlayer = new YT.Player('ytplayer', {
-    height: '200',
-    width:  '200',
-    host:   'https://www.youtube.com',
+    height: '200', width: '200',
+    host: 'https://www.youtube.com',
     playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      rel: 0,
-      enablejsapi: 1,
+      autoplay: 1, controls: 0, disablekb: 1,
+      fs: 0, rel: 0, enablejsapi: 1,
       origin: window.location.origin,
     },
     events: {
-      onReady: () => { ytReady = true; },
+      onReady: () => {
+        ytReady = true;
+        // Terapkan volume tersimpan saat player siap
+        const saved = localStorage.getItem('overlayVolume');
+        if (saved !== null) ytPlayer.setVolume(parseInt(saved));
+      },
       onStateChange: (e) => {
-        if (e.data === YT.PlayerState.PLAYING) {
-          startTimer();
-        } else if (e.data === YT.PlayerState.ENDED) {
-          stopTimer();
-          triggerNext();
-        } else if (e.data === YT.PlayerState.PAUSED) {
-          // Tidak stop timer, biarkan posisi tetap tampil
-        }
+        if (e.data === YT.PlayerState.PLAYING) startTimer();
+        else if (e.data === YT.PlayerState.ENDED) { stopTimer(); triggerNext(); }
       },
-      onError: (e) => {
-        console.error('[Overlay] YT Error:', e.data);
-        stopTimer();
-        triggerNext(); // lewati lagu yang error
-      },
+      onError: (e) => { console.error('[YT Error]', e.data); stopTimer(); triggerNext(); },
     },
   });
 }
@@ -116,8 +102,6 @@ function applyMarquee(el) {
 }
 
 // ─── RENDER STATE ────────────────────────────────
-let lastVideoId = null;
-
 function renderOverlay(state) {
   const { currentSong, queue } = state;
 
@@ -125,13 +109,10 @@ function renderOverlay(state) {
     if (ytReady && ytPlayer.stopVideo) ytPlayer.stopVideo();
     stopTimer();
     lastVideoId = null;
-
     overlay.classList.remove('hidden');
-    ovTitle.textContent = 'Menunggu Lagu...';
-    ovTitle.style.animation = 'none';
+    ovTitle.textContent        = 'Menunggu Lagu...';
+    ovTitle.style.animation    = 'none';
     ovTitle.classList.remove('long');
-    ovArtist.textContent    = 'Ketik !req [judul] di live chat';
-    ovDuration.textContent  = '??:??';
     ovRequester.style.display  = 'none';
     progressWrap.style.display = 'none';
     nextRow.style.display      = 'none';
@@ -147,31 +128,22 @@ function renderOverlay(state) {
     if (lastVideoId !== currentSong.videoId) {
       lastVideoId = currentSong.videoId;
       ytPlayer.loadVideoById(currentSong.videoId);
-      stopTimer(); // reset timer, onStateChange PLAYING yang akan start
+      stopTimer();
     }
   }
 
-  // Judul lagu
   const newTitle = currentSong.title || '—';
   if (ovTitle.textContent !== newTitle) {
     ovTitle.textContent = newTitle;
     ovTitle.style.animation = 'none';
-    ovArtist.textContent    = currentSong.channelTitle || 'Unknown Artist';
-    ovDuration.textContent  = currentSong.duration || '??:??';
     requestAnimationFrame(() => {
       ovTitle.style.animation = '';
       applyMarquee(ovTitle);
     });
   }
 
-  // Update total duration dari metadata lagu (fallback sebelum YT player siap)
-  if (currentSong.duration && ovTotal.textContent === '0:00') {
-    ovTotal.textContent = currentSong.duration;
-  }
-
   ovRequester.textContent = `req by @${currentSong.requestedBy || '—'}`;
 
-  // Next up
   const nextSong = queue && queue[0];
   if (nextSong) {
     nextRow.style.display = 'flex';
@@ -181,11 +153,10 @@ function renderOverlay(state) {
   }
 }
 
-// ─── TERIMA VOLUME DARI DASHBOARD (postMessage) ──
-window.addEventListener('message', (e) => {
-  if (!e.data || e.data.type !== 'volume') return;
+// ─── TERIMA VOLUME VIA SOCKET (dari dashboard) ──
+socket.on('volume_change', ({ value, muted }) => {
   if (!ytReady) return;
-  const { value, muted } = e.data;
+  localStorage.setItem('overlayVolume', value);
   if (muted || value === 0) {
     ytPlayer.mute();
   } else {

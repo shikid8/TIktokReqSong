@@ -458,43 +458,68 @@ body {
   transform: scale(1.2);
 }
 
-/* â”€â”€ RESPONSIVE DESIGN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-@media (max-width: 992px) {
+/* ── RESPONSIVE DESIGN ────────────────────────── */
+@media (max-width: 1100px) {
   .main {
     grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  .header-right {
-    width: 100%;
-    flex-direction: column-reverse;
-    align-items: flex-start !important;
-  }
-  .connect-wrap {
-    align-items: flex-start;
-    width: 100%;
-  }
-  .connect-form {
-    width: 100%;
-  }
-  .connect-form input {
-    flex: 1;
-  }
-  #user-profile {
-    border-left: none !important;
-    padding-left: 0 !important;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 15px;
-    width: 100%;
+    padding: 16px;
   }
 }
 
-/* â”€â”€ CONTROLS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@media (max-width: 768px) {
+  /* Header */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .header-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .connect-wrap { align-items: flex-start; width: 100%; }
+  .connect-form { width: 100%; }
+  .connect-form input { flex: 1; width: 100%; }
+  #user-profile {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    width: 100%;
+  }
+
+  /* Sim bar */
+  .sim-bar { flex-direction: column; gap: 8px; padding: 10px 16px; }
+  .sim-form { flex-wrap: wrap; width: 100%; }
+  .sim-form input { flex: 1; min-width: 120px; }
+
+  /* Controls */
+  .controls { flex-wrap: wrap; }
+  .controls .btn { flex: 1; min-width: 80px; padding: 10px 8px; }
+  .volume-wrap { flex: 100%; order: 10; }
+
+  /* Main layout */
+  .main { padding: 12px; gap: 12px; }
+
+  /* Iframe preview */
+  #overlay-iframe { width: 100%; max-width: 420px; }
+  .preview-container { padding: 10px; }
+}
+
+@media (max-width: 480px) {
+  .logo { font-size: 14px; }
+  .badge { font-size: 9px; }
+  .connect-form { flex-direction: column; }
+  .connect-form input { width: 100%; }
+  .controls .btn { font-size: 10px; padding: 8px 6px; }
+  .now-playing-title { font-size: 12px; }
+  .queue-item { gap: 8px; padding: 8px 12px; }
+}
+
+/* ── CONTROLS ────────────────────────────────────────────────── */
 .controls {
   display: flex;
   gap: 10px;

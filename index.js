@@ -237,13 +237,15 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  // Masukkan koneksi socket ke dalam Room khusus userId mereka
   socket.join(socket.userId);
   socket.emit('queue_update', queue.getState(socket.userId));
 
-  socket.on('disconnect', () => {
-    // Cleanup bila perlu
+  // Dashboard mengirim perubahan volume → broadcast ke overlay (room yang sama)
+  socket.on('volume_change', ({ value, muted }) => {
+    socket.to(socket.userId).emit('volume_change', { value, muted });
   });
+
+  socket.on('disconnect', () => {});
 });
 
 // ─── 404 HANDLER ─────────────────────────────────────────────
