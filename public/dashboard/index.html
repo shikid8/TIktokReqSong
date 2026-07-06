@@ -65,6 +65,14 @@
         <div class="card-label">▌ OVERLAY PREVIEW (LIVE)</div>
         <div class="preview-container">
           <iframe id="overlay-iframe" src="about:blank" frameborder="0" scrolling="no"></iframe>
+        </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+          <div style="font-size: 11px; color: var(--accent); margin-bottom: 5px;">URL Overlay OBS Studio:</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="obs-url-input" readonly value="Memuat URL..." style="flex: 1; padding: 6px; font-family: monospace; font-size: 11px; background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px;" />
+            <button id="copy-obs-btn" class="btn btn-sim" style="padding: 6px 12px; font-size: 11px;">COPY</button>
+          </div>
+        </div>
       </div>
 
       <!-- NOW PLAYING -->

@@ -302,9 +302,20 @@ audioToggleBtn.addEventListener('click', () => {
     document.getElementById('user-avatar').src = currentUser.user_metadata.avatar_url || '';
     document.getElementById('user-name').textContent = currentUser.user_metadata.full_name || currentUser.email;
 
-    // Atur iframe preview
+    // Atur iframe preview & URL OBS
     const obsUrl = `${window.location.origin}/overlay?token=${currentUser.id}`;
     document.getElementById('overlay-iframe').src = obsUrl;
+    
+    const obsInput = document.getElementById('obs-url-input');
+    if (obsInput) obsInput.value = obsUrl;
+
+    const copyBtn = document.getElementById('copy-obs-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(obsUrl);
+        showToast('URL OBS disalin ke clipboard!');
+      });
+    }
 
     document.getElementById('logout-btn').addEventListener('click', async () => {
       await sbClient.auth.signOut();
