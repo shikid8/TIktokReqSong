@@ -180,8 +180,8 @@ async function apiFetch(url, options = {}) {
   });
   
   if (res.status === 401) {
-    window.location.href = '/login';
-    return;
+    alert('Sesi API kadaluarsa. Silakan muat ulang halaman atau login kembali.');
+    return null;
   }
   
   return res.json();
@@ -275,7 +275,13 @@ audioToggleBtn.addEventListener('click', () => {
 
     // Jika benar-benar tidak ada session
     if (!session) {
-      window.location.href = '/login';
+      document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#0d0d0d; color:#fff; font-family:monospace; text-align:center;">
+          <h2 style="color:#e05252;">Akses Ditolak / Sesi Habis</h2>
+          <p style="margin: 20px 0; color:#888;">Gagal mendeteksi sesi login di halaman ini.<br>Mungkin karena proses login belum selesai atau Anda belum masuk.</p>
+          <a href="/login" style="padding: 10px 20px; background:#c8f25e; color:#000; text-decoration:none; border-radius:4px; font-weight:bold;">Kembali ke Halaman Login</a>
+        </div>
+      `;
       return;
     }
     
