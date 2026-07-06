@@ -56,9 +56,14 @@ function injectSupabaseConfig(htmlPath, res, extraHeaders = {}) {
     url: process.env.SUPABASE_URL || '',
     key: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_KEY || '',
   });
+
+  // Tambahkan <base> agar path relatif (style.css, app.js) diselesaikan dari direktori yang benar
+  const dir = path.basename(path.dirname(htmlPath));
+  const baseTag = `<base href="/${dir}/">`;
+
   const injected = html.replace(
     '</head>',
-    `<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
+    `${baseTag}<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
   );
   res.setHeader('Content-Type', 'text/html');
   Object.entries(extraHeaders).forEach(([k, v]) => res.setHeader(k, v));
