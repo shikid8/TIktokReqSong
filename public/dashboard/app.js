@@ -262,6 +262,18 @@ audioToggleBtn.addEventListener('click', () => {
     sbClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
     const { data: { session } } = await sbClient.auth.getSession();
     
+    // Jika tidak ada session tapi ada token di URL (proses login sedang berlangsung)
+    if (!session && window.location.hash.includes('access_token')) {
+      sbClient.auth.onAuthStateChange((event, newSession) => {
+        if (event === 'SIGNED_IN' || newSession) {
+          window.location.hash = ''; // Bersihkan URL
+          window.location.reload();  // Muat ulang dengan aman
+        }
+      });
+      return; // Tunggu proses auth selesai, jangan redirect ke login
+    }
+
+    // Jika benar-benar tidak ada session
     if (!session) {
       window.location.href = '/login';
       return;

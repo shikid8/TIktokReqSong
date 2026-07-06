@@ -120,8 +120,16 @@
       const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
 
       // Cek apakah user sudah login (jika iya, redirect langsung)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      // Gunakan onAuthStateChange agar memastikan session tersimpan dengan aman
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || session) {
+          window.location.href = '/dashboard';
+        }
+      });
+
+      // Pengecekan awal fallback
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
         window.location.href = '/dashboard';
         return;
       }
