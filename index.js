@@ -49,11 +49,9 @@ app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
 app.get('/',      (req, res) => res.redirect('/login'));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login', 'index.html')));
 
-// Dashboard — injeksi konfigurasi Supabase langsung ke HTML agar tidak terekspos di API publik
-app.get('/dashboard', (req, res) => {
-  const htmlPath = path.join(__dirname, 'public', 'dashboard', 'index.html');
+// Helper: injeksi konfigurasi Supabase ke dalam HTML
+function injectSupabaseConfig(htmlPath, res, extraHeaders = {}) {
   const html = fs.readFileSync(htmlPath, 'utf8');
   const supabaseCfg = JSON.stringify({
     url: process.env.SUPABASE_URL || '',
@@ -63,9 +61,22 @@ app.get('/dashboard', (req, res) => {
     '</head>',
     `<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
   );
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Content-Type', 'text/html');
+  Object.entries(extraHeaders).forEach(([k, v]) => res.setHeader(k, v));
   res.send(injected);
+}
+
+app.get('/login', (req, res) => {
+  injectSupabaseConfig(path.join(__dirname, 'public', 'login', 'index.html'), res);
+});
+
+// Dashboard — injeksi konfigurasi Supabase langsung ke HTML agar tidak terekspos di API publik
+app.get('/dashboard', (req, res) => {
+  injectSupabaseConfig(
+    path.join(__dirname, 'public', 'dashboard', 'index.html'),
+    res,
+    { 'X-Robots-Tag': 'noindex, nofollow' }
+  );
 });
 
 // Overlay — hanya untuk OBS, tidak perlu diindeks mesin pencari

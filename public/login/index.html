@@ -107,17 +107,16 @@
     const loginBtn = document.getElementById('login-btn');
 
     async function initAuth() {
-      // 1. Ambil config dari server untuk mendapatkan Supabase Keys
-      const res = await fetch('/api/config');
-      const config = await res.json();
+      // Kunci Supabase diinjeksi langsung ke HTML oleh server
+      const sbCfg = window.__SUPABASE__ || {};
 
-      if (!config.supabaseUrl || !config.supabaseKey) {
+      if (!sbCfg.url || !sbCfg.key) {
         alert('Supabase URL dan Key belum diatur di server (.env). Hubungi admin.');
         return;
       }
 
       // 2. Inisialisasi Supabase
-      const supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      const supabase = window.supabase.createClient(sbCfg.url, sbCfg.key);
 
       // Cek apakah user sudah login (jika iya, redirect langsung)
       // Gunakan onAuthStateChange agar memastikan session tersimpan dengan aman
