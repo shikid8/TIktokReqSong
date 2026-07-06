@@ -170,9 +170,14 @@ function escHtml(str) {
 // ─── API CALLS ────────────────────────────────────
 async function apiFetch(url, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
+  
+  if (sbClient) {
+    const { data: { session } } = await sbClient.auth.getSession();
+    if (session && session.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
   }
+
   
   const res = await fetch(url, {
     headers,
