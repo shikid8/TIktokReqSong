@@ -1,8 +1,7 @@
-// Dashboard — app.js (Multi-Tenant)
+// Dashboard — app.js
 let socket = null;
 let isConnected = false;
 let sbClient = null;
-let accessToken = null;
 let currentUser = null;
 
 // ─── ELEMENTS ────────────────────────────────────
@@ -55,8 +54,6 @@ function onYouTubeIframeAPIReady() {
 const toastContainer = document.createElement('div');
 toastContainer.id = 'toast-container';
 document.body.appendChild(toastContainer);
-
-// ─── TOAST ───────────────────────────────────────
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast${type === 'error' ? ' error' : ''}`;
@@ -295,7 +292,6 @@ audioToggleBtn.addEventListener('click', () => {
       return;
     }
     
-    accessToken = session.access_token;
     currentUser = session.user;
 
     // Tampilkan profil
@@ -322,25 +318,8 @@ audioToggleBtn.addEventListener('click', () => {
   }
 
   // Koneksi Socket.io menggunakan Token JWT
-  socket = io({ auth: { token: accessToken } });
-  setupSocketEvents();
-
-  // Auto-fill username jika ada default dari env
-  if (cfg.defaultUsername && !usernameInput.value) {
-    usernameInput.value = cfg.defaultUsername;
-  }
-  
-  if (cfg.hasYoutubeKey) {
-    ytBadge.textContent = 'YT: On';
-    ytBadge.classList.add('on');
-    ytBadge.title = 'YouTube API aktif (bisa menampilkan thumbnail)';
-  } else {
-    ytBadge.title = 'YouTube API belum diatur di .env (hanya fallback icon)';
-  }
-
-  if (cfg.requestPrefix) {
-    simCommentInput.placeholder = `${cfg.requestPrefix} Shape of You`;
-  }
+  const { data: { session: liveSession } } = await sbClient.auth.getSession();
+  socket = io({ auth: { token: liveSession?.access_token || '' } });
   setupSocketEvents(cfg);
 })();
 
@@ -366,11 +345,6 @@ async function setupSocketEvents(cfg) {
       ytBadge.title = 'Tanpa YouTube API Key — overlay tampil tanpa thumbnail';
     }
   }
-
-  const overlayUrlDisplay = document.getElementById('overlay-url-display');
-  const guidePrefixDisplay = document.getElementById('guide-prefix-display');
-  if (overlayUrlDisplay) overlayUrlDisplay.textContent = window.location.origin + '/overlay';
-  if (guidePrefixDisplay && cfg.requestPrefix) guidePrefixDisplay.textContent = cfg.requestPrefix;
 
   // Load state awal antrian dari server
   const state = await apiFetch('/api/state');
