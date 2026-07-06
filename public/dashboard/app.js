@@ -246,7 +246,10 @@ modalConfirm.addEventListener('click', async () => {
 audioToggleBtn.addEventListener('click', () => {
   isAudioEnabled = !isAudioEnabled;
   if (isAudioEnabled) {
-    if (ytReady) ytPlayer.unMute();
+    if (ytReady) {
+      ytPlayer.unMute();
+      ytPlayer.setVolume(parseInt(volumeSlider.value));
+    }
     audioToggleBtn.textContent = '🔊 AUDIO ON';
     audioToggleBtn.classList.remove('btn-danger');
     audioToggleBtn.classList.add('btn-sim');
@@ -257,6 +260,44 @@ audioToggleBtn.addEventListener('click', () => {
     audioToggleBtn.classList.remove('btn-sim');
     audioToggleBtn.classList.add('btn-danger');
     showToast('Audio Dashboard dimatikan.');
+  }
+});
+
+// ─── VOLUME SLIDER ────────────────────────────────
+const volumeSlider = document.getElementById('volume-slider');
+const volumeLabel  = document.getElementById('volume-label');
+
+// Muat preferensi volume yang tersimpan
+const savedVolume = localStorage.getItem('dashVolume');
+if (savedVolume !== null) {
+  volumeSlider.value = savedVolume;
+  volumeLabel.textContent = savedVolume;
+}
+
+volumeSlider.addEventListener('input', () => {
+  const vol = parseInt(volumeSlider.value);
+  volumeLabel.textContent = vol;
+  localStorage.setItem('dashVolume', vol);
+
+  if (ytReady) {
+    if (vol === 0) {
+      ytPlayer.mute();
+    } else {
+      if (!isAudioEnabled) {
+        // Jika audio di-off, jangan paksa unmute lewat slider
+      } else {
+        ytPlayer.unMute();
+        ytPlayer.setVolume(vol);
+      }
+    }
+  }
+
+  // Update ikon sesuai level volume
+  const icon = document.querySelector('.volume-icon');
+  if (icon) {
+    if (vol === 0) icon.textContent = '🔇';
+    else if (vol < 50) icon.textContent = '🔉';
+    else icon.textContent = '🔊';
   }
 });
 
