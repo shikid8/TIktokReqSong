@@ -44,6 +44,9 @@ const io = new Server(server, {
 });
 
 // ─── MIDDLEWARE ─────────────────────────────────────────────
+// index:false — mencegah express.static melayani index.html secara otomatis
+// sehingga route handler bisa menyisipkan konfigurasi Supabase ke HTML
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 app.use(express.json());
 
 // ─── PAGE ROUTES ────────────────────────────────────────────
@@ -57,13 +60,9 @@ function injectSupabaseConfig(htmlPath, res, extraHeaders = {}) {
     key: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_KEY || '',
   });
 
-  // Tambahkan <base> agar path relatif (style.css, app.js) diselesaikan dari direktori yang benar
-  const dir = path.basename(path.dirname(htmlPath));
-  const baseTag = `<base href="/${dir}/">`;
-
   const injected = html.replace(
     '</head>',
-    `${baseTag}<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
+    `<script>window.__SUPABASE__=${supabaseCfg};</script></head>`
   );
   res.setHeader('Content-Type', 'text/html');
   Object.entries(extraHeaders).forEach(([k, v]) => res.setHeader(k, v));
@@ -88,9 +87,6 @@ app.get('/overlay', (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.sendFile(path.join(__dirname, 'public', 'overlay', 'index.html'));
 });
-
-// Static files (CSS, JS, images) — setelah route handler HTML agar injeksi config berjalan lebih dulu
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── HEALTH CHECK (untuk Railway / Render) ──────────────────
 app.get('/health', (req, res) => {
