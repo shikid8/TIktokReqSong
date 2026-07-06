@@ -87,6 +87,8 @@ const authenticate = async (req, res, next) => {
       req.userId = user.id;
       return next();
     }
+    console.error('Supabase Auth Error for token:', token.substring(0, 10) + '...', error);
+    return res.status(401).json({ error: 'Unauthorized', details: error ? error.message : 'No user found' });
   }
 
   // 2. Cek Token dari Query parameter (Untuk OBS Overlay yang statis)
@@ -97,7 +99,7 @@ const authenticate = async (req, res, next) => {
     return next();
   }
 
-  return res.status(401).json({ error: 'Unauthorized' });
+  return res.status(401).json({ error: 'Unauthorized', details: 'No token provided' });
 };
 
 // GET state lengkap

@@ -185,7 +185,12 @@ async function apiFetch(url, options = {}) {
   });
   
   if (res.status === 401) {
-    alert('Sesi API kadaluarsa. Silakan muat ulang halaman atau login kembali.');
+    let errMsg = 'Unauthorized';
+    try {
+      const errData = await res.json();
+      errMsg = errData.details || errData.error || errMsg;
+    } catch (e) {}
+    alert(`Sesi API Ditolak! Alasan: ${errMsg}\nSilakan muat ulang halaman.`);
     return null;
   }
   
