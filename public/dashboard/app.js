@@ -329,9 +329,45 @@ audioToggleBtn.addEventListener('click', () => {
   if (cfg.requestPrefix) {
     simCommentInput.placeholder = `${cfg.requestPrefix} Shape of You`;
   }
+  setupSocketEvents(cfg);
 })();
 
-function setupSocketEvents() {
+async function setupSocketEvents(cfg) {
+  // ─── INISIALISASI UI BERDASARKAN CONFIG ───────────────────────────
+  if (cfg.defaultUsername && !usernameInput.value) {
+    usernameInput.value = cfg.defaultUsername;
+    connectHint.textContent = `Username dari konfigurasi server: @${cfg.defaultUsername} — bisa diubah`;
+  }
+
+  const simComment = document.getElementById('sim-comment');
+  if (simComment && cfg.requestPrefix) {
+    simComment.placeholder = `${cfg.requestPrefix} Shape of You`;
+  }
+
+  if (ytBadge) {
+    if (cfg.hasYoutubeKey) {
+      ytBadge.textContent = 'YT: ✔ API';
+      ytBadge.classList.add('active');
+      ytBadge.title = 'YouTube API Key aktif — thumbnail & pencarian akurat';
+    } else {
+      ytBadge.textContent = 'YT: No Key';
+      ytBadge.title = 'Tanpa YouTube API Key — overlay tampil tanpa thumbnail';
+    }
+  }
+
+  const overlayUrlDisplay = document.getElementById('overlay-url-display');
+  const guidePrefixDisplay = document.getElementById('guide-prefix-display');
+  if (overlayUrlDisplay) overlayUrlDisplay.textContent = window.location.origin + '/overlay';
+  if (guidePrefixDisplay && cfg.requestPrefix) guidePrefixDisplay.textContent = cfg.requestPrefix;
+
+  // Load state awal antrian dari server
+  const state = await apiFetch('/api/state');
+  if (state) {
+    renderNowPlaying(state.currentSong);
+    renderQueue(state.queue);
+    renderHistory(state.history);
+  }
+
   socket.on('queue_update', (state) => {
     renderNowPlaying(state.currentSong);
     renderQueue(state.queue);
@@ -403,50 +439,3 @@ simDemoBtn.addEventListener('click', async () => {
     simDemoBtn.disabled = false;
   }, 7000);
 });
-
-// ─── INIT ─────────────────────────────────────────
-(async () => {
-  // Load konfigurasi dari server
-  const cfg = await apiFetch('/api/config').catch(() => ({}));
-
-  // Auto-fill username jika ada default dari env
-  if (cfg.defaultUsername && !usernameInput.value) {
-    usernameInput.value = cfg.defaultUsername;
-    connectHint.textContent = `Username dari konfigurasi server: @${cfg.defaultUsername} — bisa diubah`;
-  }
-
-  // Update placeholder prefix sesuai konfigurasi server
-  const simComment = document.getElementById('sim-comment');
-  if (simComment && cfg.requestPrefix) {
-    simComment.placeholder = `${cfg.requestPrefix} Shape of You`;
-  }
-
-  // Status YouTube API Key
-  if (ytBadge) {
-    if (cfg.hasYoutubeKey) {
-      ytBadge.textContent = 'YT: ✔ API';
-      ytBadge.classList.add('active');
-      ytBadge.title = 'YouTube API Key aktif — thumbnail & pencarian akurat';
-    } else {
-      ytBadge.textContent = 'YT: No Key';
-      ytBadge.title = 'Tanpa YouTube API Key — overlay tampil tanpa thumbnail';
-    }
-  }
-
-  // Update panduan penggunaan (URL Overlay & Prefix)
-  const overlayUrlDisplay = document.getElementById('overlay-url-display');
-  const guidePrefixDisplay = document.getElementById('guide-prefix-display');
-  
-  if (overlayUrlDisplay) {
-    overlayUrlDisplay.textContent = window.location.origin + '/overlay';
-  }
-  if (guidePrefixDisplay && cfg.requestPrefix) {
-    guidePrefixDisplay.textContent = cfg.requestPrefix;
-  }
-
-  // Load queue state
-  const state = await apiFetch('/api/state');
-  renderNowPlaying(state.currentSong);
-  renderQueue(state.queue);
-  renderHistory(state.history);
-})();
