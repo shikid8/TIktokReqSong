@@ -28,22 +28,24 @@ function fmtSec(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// ─── TIMER PROGRESS ─────────────────────────────
-function startTimer() {
-  stopTimer();
-  timerInterval = setInterval(() => {
-    if (!ytReady || !ytPlayer.getCurrentTime) return;
-    const elapsed  = ytPlayer.getCurrentTime();
-    const duration = ytPlayer.getDuration();
-    if (!duration || duration <= 0) return;
-    ovElapsed.textContent = fmtSec(elapsed);
-    ovTotal.textContent   = fmtSec(duration);
-    progressBar.style.width = Math.min((elapsed / duration) * 100, 100) + '%';
-  }, 500);
-}
+// ─── PROGRESS POLLING ─────────────────────────────
+// Menggunakan polling setiap 500ms lebih robust daripada event onStateChange
+setInterval(() => {
+  if (!ytReady || !ytPlayer || typeof ytPlayer.getPlayerState !== 'function') return;
+  
+  if (ytPlayer.getPlayerState() === 1) { // 1 = PLAYING
+    const elapsed  = ytPlayer.getCurrentTime() || 0;
+    const duration = ytPlayer.getDuration() || 0;
+    
+    if (duration > 0) {
+      ovElapsed.textContent = fmtSec(elapsed);
+      ovTotal.textContent   = fmtSec(duration);
+      progressBar.style.width = Math.min((elapsed / duration) * 100, 100) + '%';
+    }
+  }
+}, 500);
 
-function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+function resetProgressUI() {
   ovElapsed.textContent   = '0:00';
   ovTotal.textContent     = '0:00';
   progressBar.style.width = '0%';
@@ -76,10 +78,16 @@ function onYouTubeIframeAPIReady() {
         if (saved !== null) ytPlayer.setVolume(parseInt(saved));
       },
       onStateChange: (e) => {
-        if (e.data === YT.PlayerState.PLAYING) startTimer();
-        else if (e.data === YT.PlayerState.ENDED) { stopTimer(); triggerNext(); }
+        if (e.data === 0) { // 0 = ENDED
+          resetProgressUI();
+          triggerNext();
+        }
       },
-      onError: (e) => { console.error('[YT Error]', e.data); stopTimer(); triggerNext(); },
+      onError: (e) => { 
+        console.error('[YT Error]', e.data); 
+        resetProgressUI(); 
+        triggerNext(); 
+      },
     },
   });
 }
@@ -107,7 +115,7 @@ function renderOverlay(state) {
 
   if (!currentSong) {
     if (ytReady && ytPlayer.stopVideo) ytPlayer.stopVideo();
-    stopTimer();
+    resetProgressUI();
     lastVideoId = null;
     overlay.classList.remove('hidden');
     ovTitle.textContent        = 'Menunggu Lagu...';
@@ -128,7 +136,7 @@ function renderOverlay(state) {
     if (lastVideoId !== currentSong.videoId) {
       lastVideoId = currentSong.videoId;
       ytPlayer.loadVideoById(currentSong.videoId);
-      stopTimer();
+      resetProgressUI();
     }
   }
 
