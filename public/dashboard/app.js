@@ -267,6 +267,14 @@ audioToggleBtn.addEventListener('click', () => {
 const volumeSlider = document.getElementById('volume-slider');
 const volumeLabel  = document.getElementById('volume-label');
 
+// Kirim volume ke iframe overlay via postMessage
+function sendVolumeToOverlay(vol, muted) {
+  const iframe = document.getElementById('overlay-iframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ type: 'volume', value: vol, muted }, '*');
+  }
+}
+
 // Muat preferensi volume yang tersimpan
 const savedVolume = localStorage.getItem('dashVolume');
 if (savedVolume !== null) {
@@ -279,18 +287,18 @@ volumeSlider.addEventListener('input', () => {
   volumeLabel.textContent = vol;
   localStorage.setItem('dashVolume', vol);
 
+  // Kontrol YT Player dashboard
   if (ytReady) {
     if (vol === 0) {
       ytPlayer.mute();
-    } else {
-      if (!isAudioEnabled) {
-        // Jika audio di-off, jangan paksa unmute lewat slider
-      } else {
-        ytPlayer.unMute();
-        ytPlayer.setVolume(vol);
-      }
+    } else if (isAudioEnabled) {
+      ytPlayer.unMute();
+      ytPlayer.setVolume(vol);
     }
   }
+
+  // Kirim ke overlay iframe
+  sendVolumeToOverlay(vol, vol === 0);
 
   // Update ikon sesuai level volume
   const icon = document.querySelector('.volume-icon');

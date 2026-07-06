@@ -181,6 +181,19 @@ function renderOverlay(state) {
   }
 }
 
+// ─── TERIMA VOLUME DARI DASHBOARD (postMessage) ──
+window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'volume') return;
+  if (!ytReady) return;
+  const { value, muted } = e.data;
+  if (muted || value === 0) {
+    ytPlayer.mute();
+  } else {
+    ytPlayer.unMute();
+    ytPlayer.setVolume(value);
+  }
+});
+
 // ─── SOCKET EVENTS ───────────────────────────────
 socket.on('queue_update', renderOverlay);
 
