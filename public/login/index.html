@@ -123,7 +123,8 @@
       // Gunakan onAuthStateChange agar memastikan session tersimpan dengan aman
       supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' || session) {
-          window.location.href = '/dashboard';
+          // Beri jeda 500ms agar Supabase selesai menulis ke localStorage secara asinkron
+          setTimeout(() => { window.location.href = '/dashboard'; }, 500);
         }
       });
 

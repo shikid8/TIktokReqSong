@@ -267,7 +267,7 @@ audioToggleBtn.addEventListener('click', () => {
       sbClient.auth.onAuthStateChange((event, newSession) => {
         if (event === 'SIGNED_IN' || newSession) {
           window.location.hash = ''; // Bersihkan URL
-          window.location.reload();  // Muat ulang dengan aman
+          setTimeout(() => { window.location.reload(); }, 500); // Beri waktu Supabase menyimpan token
         }
       });
       return; // Tunggu proses auth selesai, jangan redirect ke login
