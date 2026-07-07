@@ -53,8 +53,10 @@ async function connect(userId, username, onEvent) {
   });
 
   tiktokClient.on('chat', async (data) => {
-    const comment = data.comment?.trim() || '';
-    const user    = data.uniqueId || data.nickname || 'unknown';
+    // v3 tiktok-live-connector menyimpan pesan di data.comment/data.content dan user di data.user
+    const comment = (data.comment || data.content || '').trim();
+    const userObj = data.user || data.author || data;
+    const user    = userObj.uniqueId || userObj.displayId || userObj.nickname || data.uniqueId || data.nickname || 'unknown';
     const prefix  = config.REQUEST_PREFIX;
 
     onEvent({ type: 'comment', data: { user, comment } });
