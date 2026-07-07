@@ -9,7 +9,7 @@ let WebcastPushConnection = null;
 async function loadConnector() {
   if (WebcastPushConnection) return;
   const mod = require('tiktok-live-connector');
-  WebcastPushConnection = mod.WebcastPushConnection || mod.default?.WebcastPushConnection || mod;
+  WebcastPushConnection = mod.TikTokLiveConnection || mod.WebcastPushConnection || mod;
 }
 
 async function connect(userId, username, onEvent) {
