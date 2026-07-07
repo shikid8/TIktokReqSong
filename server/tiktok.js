@@ -8,8 +8,8 @@ let WebcastPushConnection = null;
 
 async function loadConnector() {
   if (WebcastPushConnection) return;
-  const mod = await import('tiktok-live-connector');
-  WebcastPushConnection = mod.WebcastPushConnection;
+  const mod = require('tiktok-live-connector');
+  WebcastPushConnection = mod.WebcastPushConnection || mod.default?.WebcastPushConnection || mod;
 }
 
 async function connect(userId, username, onEvent) {
